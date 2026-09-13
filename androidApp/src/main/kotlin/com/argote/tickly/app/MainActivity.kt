@@ -19,18 +19,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,12 +42,13 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.argote.tickly.R
-import com.argote.tickly.features.timer.notifications.TimerNotifications
+import com.argote.tickly.features.timer.data.TimerNotifications
 import com.argote.tickly.features.timer.domain.TimerEngine
 import com.argote.tickly.core.design.colorSchemeForAccent
 import java.util.Locale
+import androidx.core.content.edit
 
-open class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
@@ -61,10 +61,10 @@ open class MainActivity : ComponentActivity() {
             var showNotificationContext by remember { mutableStateOf(false) }
             var notificationUnavailable by remember { mutableStateOf(false) }
             var exactAlarmMissing by remember { mutableStateOf(false) }
-            var latestDeadline by remember { mutableStateOf(0L) }
+            var latestDeadline by remember { mutableLongStateOf(0L) }
             var displayContext by remember { mutableStateOf(localizedContext(context, null)) }
             var accentIndex by remember {
-                mutableStateOf(
+                mutableIntStateOf(
                     TimerEngine(permissionPrefs.getString("snapshot", null)).settings.accentIndex,
                 )
             }
@@ -73,11 +73,11 @@ open class MainActivity : ComponentActivity() {
                 val notificationsEnabled = getSystemService(NotificationManager::class.java)
                     .areNotificationsEnabled()
                 notificationUnavailable = !notificationsEnabled ||
-                    (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                        checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-                        PackageManager.PERMISSION_GRANTED)
+                        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                                PackageManager.PERMISSION_GRANTED)
                 exactAlarmMissing = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                    !getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+                        !getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
             }
 
             fun rescheduleLatestTimer() {
@@ -90,10 +90,12 @@ open class MainActivity : ComponentActivity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                     !getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
                 ) {
-                    startActivity(Intent(
-                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-                        Uri.fromParts("package", packageName, null),
-                    ))
+                    startActivity(
+                        Intent(
+                            Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                            Uri.fromParts("package", packageName, null),
+                        )
+                    )
                 }
             }
 
@@ -120,15 +122,19 @@ open class MainActivity : ComponentActivity() {
 
             fun dismissNotificationContext() {
                 showNotificationContext = false
-                permissionPrefs.edit().putBoolean("asked_alert_permissions", true).apply()
+                permissionPrefs.edit { putBoolean("asked_alert_permissions", true) }
             }
 
             MaterialTheme(colorScheme = colorSchemeForAccent(accentIndex)) {
-                val showAlertBanner = permissionPrefs.getBoolean("asked_alert_permissions", false) &&
-                    (notificationUnavailable || exactAlarmMissing)
+                val showAlertBanner =
+                    permissionPrefs.getBoolean("asked_alert_permissions", false) &&
+                            (notificationUnavailable || exactAlarmMissing)
                 Box(Modifier.fillMaxSize()) {
-                    // Reserve space rather than overlaying controls in the timer or its settings screen.
-                    Box(Modifier.fillMaxSize().padding(top = if (showAlertBanner) 120.dp else 0.dp)) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(top = if (showAlertBanner) 120.dp else 0.dp)
+                    ) {
                         AndroidTicklyApp(
                             context = this@MainActivity,
                             onFirstStart = {
@@ -161,6 +167,7 @@ open class MainActivity : ComponentActivity() {
                                             putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
                                         },
                                     )
+
                                     exactAlarmMissing -> requestExactAlarm()
                                 }
                             },
@@ -200,29 +207,6 @@ open class MainActivity : ComponentActivity() {
     }
 }
 
-@androidx.compose.runtime.Composable
-private fun AlertStatusBanner(
-    context: Context,
-    notificationUnavailable: Boolean,
-    exactAlarmMissing: Boolean,
-    onOpenSettings: () -> Unit,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        Column(Modifier.padding(12.dp)) {
-            if (notificationUnavailable) {
-                Text(context.getString(R.string.alerts_disabled))
-            }
-            if (exactAlarmMissing) {
-                Text(context.getString(R.string.alerts_may_be_delayed))
-            }
-            OutlinedButton(onClick = onOpenSettings) {
-                Text(context.getString(R.string.open_settings))
-            }
-        }
-    }
-}
 
 private fun localizedContext(context: Context, snapshot: String?): Context {
     val selectedLanguage = snapshot?.let { TimerEngine(it).settings.language } ?: "system"

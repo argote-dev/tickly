@@ -7,6 +7,18 @@ struct TimerScreen: View {
     @State private var actionToConfirm: TimerAction?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    private enum TimerAction: Identifiable {
+        case restart, reset, skip
+
+        var id: Int {
+            switch self {
+            case .restart: 0
+            case .reset: 1
+            case .skip: 2
+            }
+        }
+    }
+
     var body: some View {
         let accent = Color.ticklyAccent(at: store.accent.index)
         ZStack {
@@ -90,17 +102,5 @@ struct TimerScreen: View {
             Button(store.strings.text(.allowNotifications)) { store.requestNotifications() }
             Button(store.strings.text(.cancel), role: .cancel) { }
         } message: { Text(store.strings.text(.notificationsExplanation)) }
-    }
-}
-
-private enum TimerAction: Identifiable {
-    case restart, reset, skip
-
-    var id: Int {
-        switch self {
-        case .restart: 0
-        case .reset: 1
-        case .skip: 2
-        }
     }
 }

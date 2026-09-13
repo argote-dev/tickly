@@ -21,8 +21,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!-- Keeps notification PendingIntents created before MainActivity moved valid. -->
-        <activity android:name="com.argote.tickly.MainActivity" android:exported="false" />
         <receiver android:name="com.argote.tickly.notifications.TimerAlarmReceiver" android:exported="false" />
         <receiver android:name="com.argote.tickly.notifications.TimerBootReceiver" android:exported="false">
             <intent-filter>

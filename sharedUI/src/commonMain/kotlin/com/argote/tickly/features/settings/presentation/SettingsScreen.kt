@@ -14,16 +14,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,13 +25,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.argote.tickly.core.design.accentForIndex
 import com.argote.tickly.core.localization.TimerCopy
 import com.argote.tickly.features.settings.domain.TimerSettings
@@ -79,51 +69,3 @@ fun SettingsScreen(
         Spacer(Modifier.height(28.dp))
     }
 }
-@Composable
-private fun SettingSlider(
-    label: String,
-    value: Int,
-    range: IntRange,
-    suffix: String = " min",
-    update: (Int) -> Unit,
-) {
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .82f),
-        ),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(label, fontWeight = FontWeight.Medium)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    enabled = value > range.first,
-                    onClick = { update(value - 1) },
-                    modifier = Modifier.semantics { contentDescription = "$label −1" },
-                ) { Text("−", fontSize = 24.sp, color = if (value > range.first) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)) }
-                Text(
-                    "$value$suffix",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                )
-                IconButton(
-                    enabled = value < range.last,
-                    onClick = { update(value + 1) },
-                    modifier = Modifier.semantics { contentDescription = "$label +1" },
-                ) { Text("+", fontSize = 22.sp, color = if (value < range.last) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)) }
-            }
-            Slider(
-                value = value.toFloat(),
-                onValueChange = { update(it.toInt()) },
-                valueRange = range.first.toFloat()..range.last.toFloat(),
-                // Continuous track: hundreds of discrete marks obscure precise adjustment.
-                steps = 0,
-                modifier = Modifier.semantics { contentDescription = "$label $value$suffix" },
-            )
-        }
-    }
-}
-@Composable private fun SwitchRow(label: String, checked: Boolean, update: (Boolean) -> Unit) = Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(label, Modifier.weight(1f)); Switch(checked = checked, onCheckedChange = update, modifier = Modifier.semantics { contentDescription = label }) }
-@Composable private fun RadioRow(label: String, selected: Boolean, select: () -> Unit) = Row(Modifier.fillMaxWidth().clickable(onClick = select).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) { RadioButton(selected = selected, onClick = select); Text(label, Modifier.padding(start = 8.dp)) }
-@Composable private fun Section(title: String) { Spacer(Modifier.height(12.dp)); HorizontalDivider(); Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp)) }

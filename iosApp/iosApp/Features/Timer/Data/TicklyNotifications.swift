@@ -1,12 +1,12 @@
 import Foundation
 import UserNotifications
 
-final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate {
+final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate, TimerNotificationScheduler {
     static let shared = TicklyNotifications()
     private let center = UNUserNotificationCenter.current()
     private let identifier = "tickly.interval.finished"
 
-    private override init() {
+    override init() {
         super.init()
         center.delegate = self
     }
@@ -25,6 +25,14 @@ final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func cancel() { center.removePendingNotificationRequests(withIdentifiers: [identifier]) }
+
+    func needsPermissionExplanation() async -> Bool {
+        await center.notificationSettings().authorizationStatus == .notDetermined
+    }
+
+    func isDenied() async -> Bool {
+        await center.notificationSettings().authorizationStatus == .denied
+    }
 
     func isAuthorized() async -> Bool {
         let settings = await center.notificationSettings()

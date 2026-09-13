@@ -1,4 +1,4 @@
-package com.argote.tickly.features.timer.notifications
+package com.argote.tickly.features.timer.data
 
 import android.Manifest
 import android.app.AlarmManager
@@ -6,7 +6,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -16,7 +15,7 @@ import android.net.Uri
 import android.os.Build
 import java.util.Locale
 import androidx.core.content.ContextCompat
-import com.argote.tickly.MainActivity as LegacyMainActivity
+import com.argote.tickly.app.MainActivity
 import com.argote.tickly.notifications.TimerAlarmReceiver as LegacyTimerAlarmReceiver
 import com.argote.tickly.R
 import com.argote.tickly.features.timer.domain.TimerEngine
@@ -36,7 +35,7 @@ object TimerNotifications {
     private const val alarmRequestCode = 9
     /** Component names are part of persisted PendingIntent identity, not implementation detail. */
     internal fun alarmReceiverComponentName() = LegacyTimerAlarmReceiver::class.java.name
-    internal fun notificationActivityComponentName() = LegacyMainActivity::class.java.name
+    internal fun notificationActivityComponentName() = MainActivity::class.java.name
 
     /**
      * Records the alarm identity separately from the UI snapshot. The Compose ticker
@@ -140,7 +139,7 @@ object TimerNotifications {
         val launch = PendingIntent.getActivity(
             context,
             10,
-            Intent(context, LegacyMainActivity::class.java),
+            Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -208,46 +207,6 @@ object TimerNotifications {
     }
 }
 
-class TimerAlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != "com.argote.tickly.TIMER_FINISHED") return
-        val token = intent.getLongExtra(TimerNotifications.deadlineExtra, 0L)
-        val phase = intent.getStringExtra(TimerNotifications.phaseExtra) ?: return
-        val prefs = context.getSharedPreferences(TimerNotifications.preferencesName, Context.MODE_PRIVATE)
-        val engine = TimerEngine(prefs.getString(TimerNotifications.snapshotKey, null))
-        val now = System.currentTimeMillis()
-        if (!isAlarmNotificationEligible(
-                token = token,
-                phase = phase,
-                scheduledToken = prefs.getLong(TimerNotifications.scheduledDeadlineKey, 0L),
-                scheduledPhase = prefs.getString(TimerNotifications.scheduledPhaseKey, null),
-                lastNotifiedToken = prefs.getLong(TimerNotifications.lastNotifiedDeadlineKey, 0L),
-                lastNotifiedPhase = prefs.getString(TimerNotifications.lastNotifiedPhaseKey, null),
-                status = engine.status,
-                engineDeadline = engine.deadlineMillis,
-                enginePhase = engine.phase.name,
-                now = now,
-            )
-        ) return
-
-        engine.tick(now)
-        prefs.edit()
-            .putString(TimerNotifications.snapshotKey, engine.serialize())
-            .putLong(TimerNotifications.lastNotifiedDeadlineKey, token)
-            .putString(TimerNotifications.lastNotifiedPhaseKey, phase)
-            .remove(TimerNotifications.scheduledDeadlineKey)
-            .remove(TimerNotifications.scheduledPhaseKey)
-            .apply()
-        TimerNotifications.postFinished(
-            context,
-            engine.phase,
-            engine.settings.language,
-            engine.settings.soundIndex,
-            engine.settings.vibrationEnabled,
-        )
-    }
-}
-
 /** Pure gate for alarm delivery; identity, timing, and UI state must all agree. */
 internal fun isAlarmNotificationEligible(
     token: Long,
@@ -269,16 +228,5 @@ internal fun isAlarmNotificationEligible(
         // The foreground ticker may finish before a queued system alarm is delivered.
         TimerStatus.FINISHED -> enginePhase == phase
         TimerStatus.PAUSED, TimerStatus.READY -> false
-    }
-}
-
-class TimerBootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val snapshot = context.getSharedPreferences(TimerNotifications.preferencesName, Context.MODE_PRIVATE)
-            .getString(TimerNotifications.snapshotKey, null)
-        val engine = TimerEngine(snapshot)
-        if (engine.deadlineMillis > System.currentTimeMillis()) {
-            TimerNotifications.schedule(context, engine.deadlineMillis)
-        }
     }
 }

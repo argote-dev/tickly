@@ -1,9 +1,7 @@
-import Foundation
 import Combine
+import Foundation
 import SharedLogic
-import UIKit
 import SwiftUI
-import AudioToolbox
 
 @MainActor
 final class TimerStore: ObservableObject {
@@ -13,13 +11,20 @@ final class TimerStore: ObservableObject {
     @Published private(set) var notificationsUnavailable = false
     @Published private(set) var isSceneActive = true
 
-    private let snapshotKey = "tickly.timer.snapshot"
+    private let snapshots: TimerSnapshotRepository
+    private let notifications: TimerNotificationScheduler
+    private let effects: TimerPlatformEffects
+    private let now: () -> Int64
     private var ticker: AnyCancellable?
     private var lastSavedSnapshot: String?
     private var notificationGeneration = 0
 
-    init() {
-        engine = TimerEngine(snapshot: UserDefaults.standard.string(forKey: snapshotKey))
+    init(snapshots: TimerSnapshotRepository, notifications: TimerNotificationScheduler, effects: TimerPlatformEffects, now: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) }) {
+        self.snapshots = snapshots
+        self.notifications = notifications
+        self.effects = effects
+        self.now = now
+        engine = TimerEngine(snapshot: snapshots.readSnapshot())
         lastSavedSnapshot = engine.serialize()
         refresh()
         refreshNotificationAvailability()
@@ -30,7 +35,11 @@ final class TimerStore: ObservableObject {
     var accent: ColorProxy { ColorProxy(index: Int(engine.settings.accentIndex)) }
     var isRunning: Bool { engine.status == .running }
     var phaseName: String {
-        switch engine.phase { case .focus: strings.text(.focus); case .shortBreak: strings.text(.shortBreak); default: strings.text(.longBreak) }
+        switch engine.phase {
+        case .focus: strings.text(.focus)
+        case .shortBreak: strings.text(.shortBreak)
+        default: strings.text(.longBreak)
+        }
     }
     var primaryLabel: String {
         if isRunning { return strings.text(.pause) }
@@ -49,87 +58,74 @@ final class TimerStore: ObservableObject {
     func primaryAction() {
         if isRunning { pause() } else { start() }
     }
-
     func start() {
-        let now = epochMillis()
-        engine.start(nowMillis: now)
+        engine.start(nowMillis: now())
         publish()
         persist()
         refreshNotification()
-        Task {
-            let notificationSettings = await UNUserNotificationCenter.current().notificationSettings()
-            if notificationSettings.authorizationStatus == .notDetermined {
-                showNotificationExplanation = true
-            }
-        }
+        Task { if await notifications.needsPermissionExplanation() { showNotificationExplanation = true } }
     }
-
     func pause() {
-        engine.pause(nowMillis: epochMillis())
+        engine.pause(nowMillis: now())
         publish()
         persist()
         invalidateScheduledNotification()
         updateScreenIdleTimer()
     }
-
     func restart() {
-        engine.restart(nowMillis: epochMillis())
+        engine.restart(nowMillis: now())
         publish()
         persist()
         refreshNotification()
     }
-
     func skip() {
-        engine.skip(nowMillis: epochMillis())
+        engine.skip(nowMillis: now())
         publish()
         persist()
         invalidateScheduledNotification()
         updateScreenIdleTimer()
     }
-
     func reset() {
-        engine.reset(nowMillis: epochMillis())
+        engine.reset(nowMillis: now())
         publish()
         persist()
         invalidateScheduledNotification()
         updateScreenIdleTimer()
     }
-
     func apply(settings: TimerSettings) {
-        engine.updateSettings(settings: settings, nowMillis: epochMillis())
+        engine.updateSettings(settings: settings, nowMillis: now())
         publish()
         persist()
         refreshNotification()
     }
-
     func requestNotifications() {
         Task {
-            let granted = await TicklyNotifications.shared.requestPermissionIfNeeded()
-            if granted { showNotificationExplanation = false; refreshNotification() }
+            if await notifications.requestPermissionIfNeeded() {
+                showNotificationExplanation = false
+                refreshNotification()
+            }
             refreshNotificationAvailability()
         }
     }
-
     func refresh(allowVibration: Bool = false) {
-        let now = epochMillis()
+        let sampledNow = now()
         let beforeTick = engine.serialize()
-        engine.tick(nowMillis: now)
+        engine.tick(nowMillis: sampledNow)
         if engine.serialize() != beforeTick {
             publish()
             if allowVibration && engine.status == .finished && engine.settings.vibrationEnabled {
-                AudioServicesPlaySystemSound(kSystemSoundID_Vibrate)
+                effects.vibrate()
             }
         }
-        remainingMillis = engine.remainingMillis(nowMillis: now)
+        remainingMillis = engine.remainingMillis(nowMillis: sampledNow)
         persist()
         updateScreenIdleTimer()
     }
-
     func onScenePhase(_ phase: ScenePhase) {
         isSceneActive = phase == .active
         if phase == .active {
             startTicker()
-            refresh(allowVibration: false)
+            refresh()
             refreshNotificationAvailability()
             if isRunning { refreshNotification() }
         } else {
@@ -139,63 +135,47 @@ final class TimerStore: ObservableObject {
             updateScreenIdleTimer()
         }
     }
-
     private func startTicker() {
         guard ticker == nil else { return }
         ticker = Timer.publish(every: 0.25, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in self?.refresh(allowVibration: true) }
     }
-
     private func refreshNotification() {
         notificationGeneration &+= 1
         let generation = notificationGeneration
-        TicklyNotifications.shared.cancel()
-        guard engine.status == .running else { updateScreenIdleTimer(); return }
+        notifications.cancel()
+        guard engine.status == .running else {
+            updateScreenIdleTimer()
+            return
+        }
         let deadline = engine.deadlineMillis
         let phaseText = phaseName
         let finished = strings.spanish ? "Tu intervalo de \(phaseText.lowercased()) terminó." : "Your \(phaseText.lowercased()) interval has ended."
         let soundIndex = Int(engine.settings.soundIndex)
         Task { [weak self] in
-            guard let self, await TicklyNotifications.shared.isAuthorized() else { return }
-            guard self.notificationGeneration == generation,
-                  self.engine.status == .running,
-                  self.engine.deadlineMillis == deadline else { return }
-            let remainingSeconds = Double(self.engine.remainingMillis(nowMillis: self.epochMillis())) / 1_000
-            TicklyNotifications.shared.schedule(
-                after: remainingSeconds,
-                title: "Tickly · \(phaseText)",
-                body: finished,
-                soundIndex: soundIndex
-            )
+            guard let self, await notifications.isAuthorized() else { return }
+            guard notificationGeneration == generation, engine.status == .running, engine.deadlineMillis == deadline else { return }
+            let remainingSeconds = Double(engine.remainingMillis(nowMillis: now())) / 1_000
+            notifications.schedule(after: remainingSeconds, title: "Tickly · \(phaseText)", body: finished, soundIndex: soundIndex)
         }
         updateScreenIdleTimer()
     }
-
     private func invalidateScheduledNotification() {
         notificationGeneration &+= 1
-        TicklyNotifications.shared.cancel()
+        notifications.cancel()
     }
-
     private func refreshNotificationAvailability() {
-        Task {
-            let notificationSettings = await UNUserNotificationCenter.current().notificationSettings()
-            notificationsUnavailable = notificationSettings.authorizationStatus == .denied
-        }
+        Task { notificationsUnavailable = await notifications.isDenied() }
     }
-
     private func updateScreenIdleTimer() {
-        UIApplication.shared.isIdleTimerDisabled = isSceneActive && isRunning && engine.phase == .focus && engine.settings.keepScreenOn
+        effects.setScreenIdleDisabled(isSceneActive && isRunning && engine.phase == .focus && engine.settings.keepScreenOn)
     }
-
     private func persist() {
         let snapshot = engine.serialize()
         guard snapshot != lastSavedSnapshot else { return }
-        UserDefaults.standard.set(snapshot, forKey: snapshotKey)
+        snapshots.writeSnapshot(snapshot)
         lastSavedSnapshot = snapshot
     }
     private func publish() { objectWillChange.send() }
-    private func epochMillis() -> Int64 { Int64(Date().timeIntervalSince1970 * 1_000) }
 }
-
-struct ColorProxy { let index: Int }

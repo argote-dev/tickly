@@ -14,8 +14,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.argote.tickly.features.settings.platform.TimerSoundPreview
-import com.argote.tickly.features.timer.domain.TimerEngine
+import com.argote.tickly.features.settings.data.AndroidSoundPreviewer
+import com.argote.tickly.features.timer.data.SharedPreferencesTimerSnapshotRepository
+import com.argote.tickly.features.timer.presentation.TimerController
 
 /** Android bridge: keeps a KMP snapshot local and lets androidApp schedule notifications. */
 @Composable
@@ -24,8 +25,10 @@ fun AndroidTicklyApp(
     onFirstStart: () -> Unit,
     onSnapshotChanged: (String, Long, Boolean) -> Unit,
 ) {
-    val preferences = remember { context.getSharedPreferences("tickly_timer", Context.MODE_PRIVATE) }
-    val engine = remember { TimerEngine(preferences.getString("snapshot", null)) }
+    val snapshots = remember(context) { SharedPreferencesTimerSnapshotRepository(context) }
+    val controller = remember(snapshots) { TimerController(snapshots) }
+    val engine = controller.engine
+    val soundPreviewer = remember(context) { AndroidSoundPreviewer(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
     var isActive by remember { mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) }
     var changeVersion by remember { mutableIntStateOf(0) }
@@ -45,7 +48,7 @@ fun AndroidTicklyApp(
                     Settings.Global.ANIMATOR_DURATION_SCALE,
                     1f,
                 ) == 0f
-                engine.tick(System.currentTimeMillis())
+                controller.tick(System.currentTimeMillis())
                 onSnapshotChanged(
                     engine.serialize(),
                     engine.deadlineMillis,
@@ -62,7 +65,6 @@ fun AndroidTicklyApp(
         val snapshot = engine.serialize()
         if (snapshot != savedSnapshot) {
             savedSnapshot = snapshot
-            preferences.edit().putString("snapshot", snapshot).apply()
             onSnapshotChanged(
                 snapshot,
                 engine.deadlineMillis,
@@ -72,10 +74,10 @@ fun AndroidTicklyApp(
     }
     BackHandler(enabled = settingsVisible) { backRequest++ }
     TicklyApp(
-        engine = engine,
+        controller = controller,
         reducedMotion = reducedMotion,
         systemLanguage = if (java.util.Locale.getDefault().language == "es") "es" else "en",
-        onPreviewSound = { TimerSoundPreview.play(context, it) },
+        onPreviewSound = soundPreviewer::preview,
         isActive = isActive,
         backRequest = backRequest,
         onSettingsVisibilityChanged = { settingsVisible = it },

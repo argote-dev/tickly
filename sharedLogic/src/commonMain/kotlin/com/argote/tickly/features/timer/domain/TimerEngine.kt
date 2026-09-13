@@ -2,12 +2,6 @@ package com.argote.tickly.features.timer.domain
 
 import com.argote.tickly.features.settings.domain.TimerSettings
 
-/** The kind of interval currently displayed by [TimerEngine]. */
-enum class TimerPhase { FOCUS, SHORT_BREAK, LONG_BREAK }
-
-/** The lifecycle of the interval currently displayed by [TimerEngine]. */
-enum class TimerStatus { READY, RUNNING, PAUSED, FINISHED }
-
 /**
  * A deterministic pomodoro state machine. Time is always supplied by the caller
  * in milliseconds, which keeps this type independent of platform clocks and easy

@@ -1,13 +1,14 @@
-package com.argote.tickly.features.settings.platform
+package com.argote.tickly.features.settings.data
 
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import com.argote.tickly.sharedUI.R
+import com.argote.tickly.features.settings.domain.SoundPreviewer
 
 /** Plays a short bundled preview of the selected Tickly alert. */
-internal object TimerSoundPreview {
-    fun play(context: Context, soundIndex: Int) {
+class AndroidSoundPreviewer(private val context: Context) : SoundPreviewer {
+    override fun preview(soundIndex: Int) {
         val resource = when (soundIndex) {
             0 -> R.raw.tickly_0
             1 -> R.raw.tickly_1

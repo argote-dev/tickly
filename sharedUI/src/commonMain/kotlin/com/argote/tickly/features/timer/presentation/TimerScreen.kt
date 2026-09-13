@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -43,7 +42,6 @@ import com.argote.tickly.features.timer.domain.TimerEngine
 import com.argote.tickly.features.timer.domain.TimerPhase
 import com.argote.tickly.features.timer.domain.TimerStatus
 
-enum class TimerAction { Restart, Skip, Reset }
 
 @Composable
 fun TimerScreen(engine: TimerEngine, now: Long, accent: Color, copy: TimerCopy, revision: Int, onStartPause: () -> Unit, onRestart: () -> Unit, onSkip: () -> Unit, onReset: () -> Unit, onSettings: () -> Unit) {
@@ -91,29 +89,6 @@ fun TimerScreen(engine: TimerEngine, now: Long, accent: Color, copy: TimerCopy, 
 }
 
 
-@Composable
-fun ConfirmTimerActionDialog(
-    copy: TimerCopy,
-    action: TimerAction,
-    onDismiss: () -> Unit,
-    confirm: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(when (action) {
-            TimerAction.Restart -> copy.restart
-            TimerAction.Skip -> copy.skipFocus
-            TimerAction.Reset -> copy.startOver
-        }) },
-        text = { Text(when (action) {
-            TimerAction.Restart -> copy.restartMessage
-            TimerAction.Skip -> copy.skipMessage
-            TimerAction.Reset -> copy.resetMessage
-        }) },
-        confirmButton = { Button(onClick = confirm) { Text(copy.confirm) } },
-        dismissButton = { OutlinedButton(onClick = onDismiss) { Text(copy.cancel) } },
-    )
-}
 
 private fun statusLabel(engine: TimerEngine, copy: TimerCopy): String {
     val spanish = copy.focus == "Enfoque"

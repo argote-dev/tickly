@@ -10,7 +10,7 @@
 
 Keep reusable logic in `sharedLogic` and reusable UI in `sharedUI`; isolate platform APIs in platform-specific source sets.
 
-Before adding or moving source files, read `docs/code-organization.md`. Organize by `features/<feature>` first, with `app` for composition and `core` only for cross-feature code. Kotlin packages mirror folders; Swift uses `Features/<Feature>`. Keep tests with the corresponding slice's package and do not introduce empty layers or new Gradle modules solely to organize files.
+Before adding or moving source files, read `docs/code-organization.md`. Organize by `features/<feature>/{presentation,domain,data}` across existing modules and source sets, with `app` for dependency composition and `core` only for cross-feature code. Keep domain independent of platform APIs, inject data adapters into presentation, and keep screens independent of other features' presentation state. Kotlin packages mirror folders; Swift uses `Features/<Feature>`. Keep tests with the corresponding slice's package and do not introduce empty layers or new Gradle modules solely to organize files.
 
 ## Build, Test, and Development Commands
 
@@ -24,7 +24,7 @@ Run Android through the IDE's run configuration. Open `iosApp/` in Xcode to buil
 
 ## Coding Style & Naming Conventions
 
-Follow Kotlin official style, configured in `gradle.properties`, with four-space indentation. Use the existing `com.argote.tickly` package hierarchy. Name classes and composables in PascalCase, and ordinary functions and properties in camelCase. Keep Kotlin filenames aligned with their primary declaration. Use IDE formatting; no dedicated formatter or lint configuration is present.
+Follow Kotlin official style, configured in `gradle.properties`, with four-space indentation. Use the existing `com.argote.tickly` package hierarchy. Name classes and composables in PascalCase, and ordinary functions and properties in camelCase. Keep each top-level class, interface, enum, or object in its own same-named Kotlin file; apply the same rule to Swift classes, structs, enums, and protocols. Keep nested implementation types with their owner. Each named `@Composable` function and SwiftUI view also gets its own same-named file; preserve state/effect ownership when extracting UI components. Use IDE formatting; no dedicated formatter or lint configuration is present.
 
 ## Testing Guidelines
 
