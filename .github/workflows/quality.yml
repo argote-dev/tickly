@@ -26,7 +26,7 @@ jobs:
         run: scripts/quality-gates.sh android
       - name: Upload Android reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-quality-reports
           path: |
@@ -60,7 +60,7 @@ jobs:
         run: scripts/quality-gates.sh ios
       - name: Upload iOS reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-quality-reports
           path: |
