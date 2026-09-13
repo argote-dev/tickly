@@ -1,0 +1,284 @@
+package com.argote.tickly.features.timer.notifications
+
+import android.Manifest
+import android.app.AlarmManager
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.res.Configuration
+import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.net.Uri
+import android.os.Build
+import java.util.Locale
+import androidx.core.content.ContextCompat
+import com.argote.tickly.MainActivity as LegacyMainActivity
+import com.argote.tickly.notifications.TimerAlarmReceiver as LegacyTimerAlarmReceiver
+import com.argote.tickly.R
+import com.argote.tickly.features.timer.domain.TimerEngine
+import com.argote.tickly.features.timer.domain.TimerPhase
+import com.argote.tickly.features.timer.domain.TimerStatus
+
+object TimerNotifications {
+    private const val alarmAction = "com.argote.tickly.TIMER_FINISHED"
+    internal const val preferencesName = "tickly_timer"
+    internal const val snapshotKey = "snapshot"
+    internal const val scheduledDeadlineKey = "scheduled_deadline"
+    internal const val scheduledPhaseKey = "scheduled_phase"
+    internal const val lastNotifiedDeadlineKey = "last_notified_deadline"
+    internal const val lastNotifiedPhaseKey = "last_notified_phase"
+    internal const val deadlineExtra = "deadline"
+    internal const val phaseExtra = "phase"
+    private const val alarmRequestCode = 9
+    /** Component names are part of persisted PendingIntent identity, not implementation detail. */
+    internal fun alarmReceiverComponentName() = LegacyTimerAlarmReceiver::class.java.name
+    internal fun notificationActivityComponentName() = LegacyMainActivity::class.java.name
+
+    /**
+     * Records the alarm identity separately from the UI snapshot. The Compose ticker
+     * writes FINISHED with a zero deadline before a due broadcast is necessarily
+     * delivered, so that write must not accidentally cancel the pending broadcast.
+     */
+    fun schedule(context: Context, deadlineMillis: Long) {
+        val prefs = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
+        val engine = TimerEngine(prefs.getString(snapshotKey, null))
+        val manager = context.getSystemService(AlarmManager::class.java)
+        val now = System.currentTimeMillis()
+        val scheduledDeadline = prefs.getLong(scheduledDeadlineKey, 0L)
+        val scheduledPhase = prefs.getString(scheduledPhaseKey, null)
+        val phase = engine.phase.name
+        val shouldSchedule = engine.status == TimerStatus.RUNNING && deadlineMillis > now
+
+        if (shouldSchedule) {
+            // The bridge already deduplicates render ticks. Re-arm on resume/boot:
+            // a persisted identity does not prove the OS still holds the alarm.
+            cancel(manager, context, scheduledDeadline, scheduledPhase)
+            val pending = alarmPendingIntent(context, deadlineMillis, phase)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !manager.canScheduleExactAlarms()) {
+                    manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deadlineMillis, pending)
+                } else {
+                    manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deadlineMillis, pending)
+                }
+            } catch (_: SecurityException) {
+                // Access can be revoked between the capability check and schedule call.
+                manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, deadlineMillis, pending)
+            }
+            prefs.edit()
+                .putLong(scheduledDeadlineKey, deadlineMillis)
+                .putString(scheduledPhaseKey, phase)
+                .apply()
+            return
+        }
+
+        // onStart can call this bridge before its new FINISHED snapshot is persisted.
+        val isDueIntervalAwaitingDelivery = scheduledDeadline > 0L &&
+            scheduledDeadline <= now &&
+            scheduledPhase == phase &&
+            ((engine.status == TimerStatus.FINISHED) ||
+                (engine.status == TimerStatus.RUNNING && engine.deadlineMillis == scheduledDeadline))
+        if (!isDueIntervalAwaitingDelivery) {
+            cancel(manager, context, scheduledDeadline, scheduledPhase)
+            prefs.edit().remove(scheduledDeadlineKey).remove(scheduledPhaseKey).apply()
+        }
+    }
+
+    private fun cancel(
+        manager: AlarmManager,
+        context: Context,
+        deadlineMillis: Long,
+        phase: String?,
+    ) {
+        if (deadlineMillis > 0L && phase != null) {
+            manager.cancel(alarmPendingIntent(context, deadlineMillis, phase))
+        }
+    }
+
+    private fun alarmPendingIntent(context: Context, deadlineMillis: Long, phase: String): PendingIntent =
+        PendingIntent.getBroadcast(
+            context,
+            alarmRequestCode,
+            Intent(context, LegacyTimerAlarmReceiver::class.java)
+                .setAction(alarmAction)
+                // Extras are not PendingIntent identity; data makes each timer session distinct.
+                .setData(Uri.parse("tickly://timer/$deadlineMillis/$phase"))
+                .putExtra(deadlineExtra, deadlineMillis)
+                .putExtra(phaseExtra, phase),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+    fun postFinished(
+        context: Context,
+        phase: TimerPhase,
+        language: String,
+        soundIndex: Int,
+        vibrationEnabled: Boolean,
+    ) {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        val displayContext = localizedContext(context, language)
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        val channelId = channelId(soundIndex, vibrationEnabled)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.createNotificationChannel(
+                notificationChannel(displayContext, channelId, soundIndex, vibrationEnabled),
+            )
+        }
+
+        val title = when (phase) {
+            TimerPhase.FOCUS -> displayContext.getString(R.string.focus_complete)
+            TimerPhase.SHORT_BREAK, TimerPhase.LONG_BREAK -> displayContext.getString(R.string.break_complete)
+        }
+        val launch = PendingIntent.getActivity(
+            context,
+            10,
+            Intent(context, LegacyMainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(context, channelId)
+        } else {
+            Notification.Builder(context).apply {
+                soundUri(context, soundIndex)?.let(::setSound)
+                if (vibrationEnabled) setVibrate(longArrayOf(0, 80, 70, 100))
+            }
+        }
+        notificationManager.notify(
+            19,
+            builder
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(displayContext.getString(R.string.timer_finished))
+                .setAutoCancel(true)
+                .setContentIntent(launch)
+                .build(),
+        )
+    }
+
+    private fun localizedContext(context: Context, language: String): Context {
+        val locale = when (language) { "es" -> Locale("es"); "en" -> Locale.ENGLISH; else -> return context }
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(locale)
+        return context.createConfigurationContext(configuration)
+    }
+
+    private fun notificationChannel(
+        context: Context,
+        id: String,
+        soundIndex: Int,
+        vibrationEnabled: Boolean,
+    ): NotificationChannel {
+        return NotificationChannel(
+            id,
+            context.getString(R.string.timer_notifications),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            setSound(
+                soundUri(context, soundIndex),
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
+            )
+            enableVibration(vibrationEnabled)
+            if (vibrationEnabled) vibrationPattern = longArrayOf(0, 80, 70, 100)
+            setBypassDnd(false)
+        }
+    }
+
+    internal fun channelId(soundIndex: Int, vibrationEnabled: Boolean): String =
+        "timer_finished_s${soundIndex.coerceIn(-1, 2)}_v${if (vibrationEnabled) 1 else 0}"
+
+    private fun soundUri(context: Context, soundIndex: Int): Uri? {
+        val name = when (soundIndex) {
+            0 -> "tickly_0"
+            1 -> "tickly_1"
+            2 -> "tickly_2"
+            else -> return null
+        }
+        return Uri.parse("android.resource://${context.packageName}/raw/$name")
+    }
+}
+
+class TimerAlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != "com.argote.tickly.TIMER_FINISHED") return
+        val token = intent.getLongExtra(TimerNotifications.deadlineExtra, 0L)
+        val phase = intent.getStringExtra(TimerNotifications.phaseExtra) ?: return
+        val prefs = context.getSharedPreferences(TimerNotifications.preferencesName, Context.MODE_PRIVATE)
+        val engine = TimerEngine(prefs.getString(TimerNotifications.snapshotKey, null))
+        val now = System.currentTimeMillis()
+        if (!isAlarmNotificationEligible(
+                token = token,
+                phase = phase,
+                scheduledToken = prefs.getLong(TimerNotifications.scheduledDeadlineKey, 0L),
+                scheduledPhase = prefs.getString(TimerNotifications.scheduledPhaseKey, null),
+                lastNotifiedToken = prefs.getLong(TimerNotifications.lastNotifiedDeadlineKey, 0L),
+                lastNotifiedPhase = prefs.getString(TimerNotifications.lastNotifiedPhaseKey, null),
+                status = engine.status,
+                engineDeadline = engine.deadlineMillis,
+                enginePhase = engine.phase.name,
+                now = now,
+            )
+        ) return
+
+        engine.tick(now)
+        prefs.edit()
+            .putString(TimerNotifications.snapshotKey, engine.serialize())
+            .putLong(TimerNotifications.lastNotifiedDeadlineKey, token)
+            .putString(TimerNotifications.lastNotifiedPhaseKey, phase)
+            .remove(TimerNotifications.scheduledDeadlineKey)
+            .remove(TimerNotifications.scheduledPhaseKey)
+            .apply()
+        TimerNotifications.postFinished(
+            context,
+            engine.phase,
+            engine.settings.language,
+            engine.settings.soundIndex,
+            engine.settings.vibrationEnabled,
+        )
+    }
+}
+
+/** Pure gate for alarm delivery; identity, timing, and UI state must all agree. */
+internal fun isAlarmNotificationEligible(
+    token: Long,
+    phase: String,
+    scheduledToken: Long,
+    scheduledPhase: String?,
+    lastNotifiedToken: Long,
+    lastNotifiedPhase: String?,
+    status: TimerStatus,
+    engineDeadline: Long,
+    enginePhase: String,
+    now: Long,
+): Boolean {
+    if (token <= 0L || now < token) return false
+    if (token != scheduledToken || phase != scheduledPhase) return false
+    if (token == lastNotifiedToken && phase == lastNotifiedPhase) return false
+    return when (status) {
+        TimerStatus.RUNNING -> engineDeadline == token && enginePhase == phase
+        // The foreground ticker may finish before a queued system alarm is delivered.
+        TimerStatus.FINISHED -> enginePhase == phase
+        TimerStatus.PAUSED, TimerStatus.READY -> false
+    }
+}
+
+class TimerBootReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val snapshot = context.getSharedPreferences(TimerNotifications.preferencesName, Context.MODE_PRIVATE)
+            .getString(TimerNotifications.snapshotKey, null)
+        val engine = TimerEngine(snapshot)
+        if (engine.deadlineMillis > System.currentTimeMillis()) {
+            TimerNotifications.schedule(context, engine.deadlineMillis)
+        }
+    }
+}

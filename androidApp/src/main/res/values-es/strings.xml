@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Tickly</string>
+    <string name="timer_notifications">Temporizador</string>
+    <string name="focus_complete">Enfoque finalizado</string>
+    <string name="break_complete">Descanso finalizado</string>
+    <string name="timer_finished">Tu próximo intervalo está listo.</string>
+    <string name="notification_permission_title">Mantente al tanto con suavidad</string>
+    <string name="notification_permission_message">Permite un aviso discreto al finalizar un intervalo. Puedes seguir usando Tickly si lo rechazas.</string>
+    <string name="continue_label">Continuar</string>
+    <string name="not_now">Ahora no</string>
+    <string name="alerts_disabled">Los avisos están desactivados.</string>
+    <string name="alerts_may_be_delayed">Los avisos pueden retrasarse porque las alarmas precisas están desactivadas.</string>
+    <string name="open_settings">Abrir ajustes</string>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Tickly</string>
+    <string name="timer_notifications">Timer</string>
+    <string name="focus_complete">Focus complete</string>
+    <string name="break_complete">Break complete</string>
+    <string name="timer_finished">Your next interval is ready.</string>
+    <string name="notification_permission_title">Stay gently informed</string>
+    <string name="notification_permission_message">Allow one discreet notification when an interval ends. You can still use Tickly if you decline.</string>
+    <string name="continue_label">Continue</string>
+    <string name="not_now">Not now</string>
+    <string name="alerts_disabled">Alerts are disabled.</string>
+    <string name="alerts_may_be_delayed">Alerts may be delayed because precise alarms are disabled.</string>
+    <string name="open_settings">Open settings</string>
+</resources>
