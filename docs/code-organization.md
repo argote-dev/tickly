@@ -17,7 +17,6 @@ Las rutas Kotlin parten de `src/<sourceSet>/kotlin/com/argote/tickly/`. Los sour
 | `features/settings/platform` | Previsualización nativa de sonidos | `sharedUI/androidMain`; `Features/Settings/Platform` en iOS |
 | `core/design` | Tema, acentos y elementos visuales compartidos entre pantallas | `sharedUI`; `Core/Design` en iOS |
 | `core/localization` | Catálogo de textos ES/EN usado por varias pantallas | `sharedUI`; `Core/Localization` en iOS |
-| `core/platform` | Código de plataforma y ejemplos conservados del starter KMP | `sharedLogic` |
 
 ## Reglas de dependencia
 
