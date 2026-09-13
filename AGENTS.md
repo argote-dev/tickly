@@ -24,7 +24,9 @@ Run Android through the IDE's run configuration. Open `iosApp/` in Xcode to buil
 
 ## Coding Style & Naming Conventions
 
-Follow Kotlin official style, configured in `gradle.properties`, with four-space indentation. Use the existing `com.argote.tickly` package hierarchy. Name classes and composables in PascalCase, and ordinary functions and properties in camelCase. Keep each top-level class, interface, enum, or object in its own same-named Kotlin file; apply the same rule to Swift classes, structs, enums, and protocols. Keep nested implementation types with their owner. Each named `@Composable` function and SwiftUI view also gets its own same-named file; preserve state/effect ownership when extracting UI components. Use IDE formatting; no dedicated formatter or lint configuration is present.
+Follow Kotlin official style, configured in `gradle.properties`, with four-space indentation. Use the existing `com.argote.tickly` package hierarchy. Name classes and composables in PascalCase, and ordinary functions and properties in camelCase. Keep each top-level class, interface, enum, or object in its own same-named Kotlin file; apply the same rule to Swift classes, structs, enums, and protocols. Keep nested implementation types with their owner. Each named `@Composable` function and SwiftUI view also gets its own same-named file; preserve state/effect ownership when extracting UI components. Use the pinned ktlint and SwiftLint configuration; see `docs/quality-gates.md` for formatting commands and rule policy.
+
+Before delivery, run `./scripts/quality-gates.sh all` on macOS with both toolchains, or run the available platform gate and explicitly report the unvalidated gate. Read `docs/quality-gates.md` when changing quality configuration or preparing a PR.
 
 ## Testing Guidelines
 

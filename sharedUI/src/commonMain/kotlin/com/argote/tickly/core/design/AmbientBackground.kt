@@ -17,20 +17,27 @@ import androidx.compose.ui.graphics.Color
 
 /** Dark ambient gradient whose motion is opt-in for accessibility. */
 @Composable
-fun AmbientBackground(accent: Color, animate: Boolean) {
-    val offset = if (animate) {
-        val transition = rememberInfiniteTransition(label = "ambient background")
-        val shift by transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(16_000, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-            label = "gradient drift",
-        )
-        shift
-    } else .35f
+fun AmbientBackground(
+    accent: Color,
+    animate: Boolean,
+) {
+    val offset =
+        if (animate) {
+            val transition = rememberInfiniteTransition(label = "ambient background")
+            val shift by transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec =
+                infiniteRepeatable(
+                    animation = tween(16_000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+                label = "gradient drift",
+            )
+            shift
+        } else {
+            .35f
+        }
     Canvas(Modifier.fillMaxSize()) {
         drawRect(
             Brush.linearGradient(

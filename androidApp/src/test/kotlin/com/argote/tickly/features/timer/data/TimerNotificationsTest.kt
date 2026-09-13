@@ -14,12 +14,13 @@ class TimerNotificationsTest {
 
     @Test
     fun `notification channels are unique for every supported sound and vibration preference`() {
-        val ids = buildSet {
-            for (sound in -1..2) {
-                add(TimerNotifications.channelId(sound, vibrationEnabled = false))
-                add(TimerNotifications.channelId(sound, vibrationEnabled = true))
+        val ids =
+            buildSet {
+                for (sound in -1..2) {
+                    add(TimerNotifications.channelId(sound, vibrationEnabled = false))
+                    add(TimerNotifications.channelId(sound, vibrationEnabled = true))
+                }
             }
-        }
 
         assertEquals(8, ids.size)
         assertTrue("timer_finished_s-1_v0" in ids)

@@ -11,7 +11,10 @@ final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate, Tim
         center.delegate = self
     }
 
-    func userNotificationCenter(_: UNUserNotificationCenter, willPresent _: UNNotification) async -> UNNotificationPresentationOptions {
+    func userNotificationCenter(
+        _: UNUserNotificationCenter,
+        willPresent _: UNNotification
+    ) async -> UNNotificationPresentationOptions {
         [.banner, .sound]
     }
 
@@ -20,8 +23,11 @@ final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate, Tim
         guard settings.authorizationStatus == .notDetermined else {
             return settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
         }
-        do { return try await center.requestAuthorization(options: [.alert, .sound, .badge]) }
-        catch { return false }
+        do {
+            return try await center.requestAuthorization(options: [.alert, .sound, .badge])
+        } catch {
+            return false
+        }
     }
 
     func cancel() { center.removePendingNotificationRequests(withIdentifiers: [identifier]) }
@@ -45,7 +51,9 @@ final class TicklyNotifications: NSObject, UNUserNotificationCenterDelegate, Tim
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
-        content.sound = soundIndex < 0 ? nil : UNNotificationSound(named: UNNotificationSoundName("tickly-\(soundIndex).caf"))
+        content.sound = soundIndex < 0
+            ? nil
+            : UNNotificationSound(named: UNNotificationSoundName("tickly-\(soundIndex).caf"))
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, seconds), repeats: false)
         center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
     }

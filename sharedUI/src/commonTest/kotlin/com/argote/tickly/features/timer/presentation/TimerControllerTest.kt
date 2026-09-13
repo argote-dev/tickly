@@ -62,9 +62,16 @@ class TimerControllerTest {
         assertTrue(repository.writes.last().contains("si=2"))
     }
 
-    private class FakeSnapshots(private var value: String? = null) : TimerSnapshotRepository {
+    private class FakeSnapshots(
+        private var value: String? = null,
+    ) : TimerSnapshotRepository {
         val writes = mutableListOf<String>()
+
         override fun readSnapshot() = value
-        override fun writeSnapshot(snapshot: String) { value = snapshot; writes += snapshot }
+
+        override fun writeSnapshot(snapshot: String) {
+            value = snapshot
+            writes += snapshot
+        }
     }
 }

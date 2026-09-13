@@ -1,0 +1,18 @@
+included:
+  - iosApp/iosApp
+  - scripts
+
+excluded:
+  - build
+  - .build
+  - .swiftpm
+  - DerivedData
+  - iosApp/iosApp.xcodeproj
+
+strict: true
+allow_zero_lintable_files: false
+
+line_length:
+  ignores_urls: true
+
+reporter: "xcode"

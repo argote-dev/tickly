@@ -6,10 +6,16 @@ import kotlin.test.assertEquals
 class TimerSettingsTest {
     @Test
     fun settingsAreClampedToProductBounds() {
-        val settings = TimerSettings(
-            focusMinutes = -1, shortBreakMinutes = 99, longBreakMinutes = 0,
-            blocksUntilLongBreak = 99, accentIndex = 99, soundIndex = -99, language = "Portuguese",
-        ).validated()
+        val settings =
+            TimerSettings(
+                focusMinutes = -1,
+                shortBreakMinutes = 99,
+                longBreakMinutes = 0,
+                blocksUntilLongBreak = 99,
+                accentIndex = 99,
+                soundIndex = -99,
+                language = "Portuguese",
+            ).validated()
 
         assertEquals(1, settings.focusMinutes)
         assertEquals(60, settings.shortBreakMinutes)

@@ -29,7 +29,8 @@ internal fun SettingSlider(
     update: (Int) -> Unit,
 ) {
     Card(
-        colors = CardDefaults.cardColors(
+        colors =
+        CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = .82f),
         ),
         modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
@@ -41,7 +42,20 @@ internal fun SettingSlider(
                     enabled = value > range.first,
                     onClick = { update(value - 1) },
                     modifier = Modifier.semantics { contentDescription = "$label −1" },
-                ) { Text("−", fontSize = 24.sp, color = if (value > range.first) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)) }
+                ) {
+                    Text(
+                        "−",
+                        fontSize = 24.sp,
+                        color =
+                        if (value >
+                            range.first
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)
+                        },
+                    )
+                }
                 Text(
                     "$value$suffix",
                     style = MaterialTheme.typography.titleLarge,
@@ -52,7 +66,20 @@ internal fun SettingSlider(
                     enabled = value < range.last,
                     onClick = { update(value + 1) },
                     modifier = Modifier.semantics { contentDescription = "$label +1" },
-                ) { Text("+", fontSize = 22.sp, color = if (value < range.last) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)) }
+                ) {
+                    Text(
+                        "+",
+                        fontSize = 22.sp,
+                        color =
+                        if (value <
+                            range.last
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)
+                        },
+                    )
+                }
             }
             Slider(
                 value = value.toFloat(),

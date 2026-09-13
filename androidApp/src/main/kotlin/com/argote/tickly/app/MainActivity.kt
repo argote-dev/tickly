@@ -38,15 +38,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.argote.tickly.R
+import com.argote.tickly.core.design.colorSchemeForAccent
 import com.argote.tickly.features.timer.data.TimerNotifications
 import com.argote.tickly.features.timer.domain.TimerEngine
-import com.argote.tickly.core.design.colorSchemeForAccent
 import java.util.Locale
-import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,14 +70,17 @@ class MainActivity : ComponentActivity() {
             }
 
             fun refreshAlertAccess() {
-                val notificationsEnabled = getSystemService(NotificationManager::class.java)
-                    .areNotificationsEnabled()
+                val notificationsEnabled =
+                    getSystemService(NotificationManager::class.java)
+                        .areNotificationsEnabled()
                 notificationUnavailable = !notificationsEnabled ||
-                        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-                                PackageManager.PERMISSION_GRANTED)
+                    (
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                            PackageManager.PERMISSION_GRANTED
+                        )
                 exactAlarmMissing = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                        !getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+                    !getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
             }
 
             fun rescheduleLatestTimer() {
@@ -94,31 +97,33 @@ class MainActivity : ComponentActivity() {
                         Intent(
                             Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
                             Uri.fromParts("package", packageName, null),
-                        )
+                        ),
                     )
                 }
             }
 
             val lifecycleOwner = LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner) {
-                val observer = object : DefaultLifecycleObserver {
-                    override fun onResume(owner: LifecycleOwner) {
-                        refreshAlertAccess()
-                        // This also upgrades a pending inexact alarm after the user enables exact alarms.
-                        rescheduleLatestTimer()
+                val observer =
+                    object : DefaultLifecycleObserver {
+                        override fun onResume(owner: LifecycleOwner) {
+                            refreshAlertAccess()
+                            // This also upgrades a pending inexact alarm after the user enables exact alarms.
+                            rescheduleLatestTimer()
+                        }
                     }
-                }
                 lifecycleOwner.lifecycle.addObserver(observer)
                 onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
             }
 
-            val notificationPermission = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission(),
-            ) {
-                refreshAlertAccess()
-                // Android displays this prompt first; only request exact-alarm access after it closes.
-                requestExactAlarm()
-            }
+            val notificationPermission =
+                rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission(),
+                ) {
+                    refreshAlertAccess()
+                    // Android displays this prompt first; only request exact-alarm access after it closes.
+                    requestExactAlarm()
+                }
 
             fun dismissNotificationContext() {
                 showNotificationContext = false
@@ -128,12 +133,12 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = colorSchemeForAccent(accentIndex)) {
                 val showAlertBanner =
                     permissionPrefs.getBoolean("asked_alert_permissions", false) &&
-                            (notificationUnavailable || exactAlarmMissing)
+                        (notificationUnavailable || exactAlarmMissing)
                 Box(Modifier.fillMaxSize()) {
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .padding(top = if (showAlertBanner) 120.dp else 0.dp)
+                            .padding(top = if (showAlertBanner) 120.dp else 0.dp),
                     ) {
                         AndroidTicklyApp(
                             context = this@MainActivity,
@@ -162,13 +167,17 @@ class MainActivity : ComponentActivity() {
                             exactAlarmMissing = exactAlarmMissing,
                             onOpenSettings = {
                                 when {
-                                    notificationUnavailable -> startActivity(
-                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                                        },
-                                    )
+                                    notificationUnavailable -> {
+                                        startActivity(
+                                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                                            },
+                                        )
+                                    }
 
-                                    exactAlarmMissing -> requestExactAlarm()
+                                    exactAlarmMissing -> {
+                                        requestExactAlarm()
+                                    }
                                 }
                             },
                         )
@@ -207,14 +216,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-private fun localizedContext(context: Context, snapshot: String?): Context {
+private fun localizedContext(
+    context: Context,
+    snapshot: String?,
+): Context {
     val selectedLanguage = snapshot?.let { TimerEngine(it).settings.language } ?: "system"
-    val locale = when (selectedLanguage) {
-        "es" -> Locale("es")
-        "en" -> Locale.ENGLISH
-        else -> if (Locale.getDefault().language == "es") Locale("es") else Locale.ENGLISH
-    }
+    val locale =
+        when (selectedLanguage) {
+            "es" -> Locale("es")
+            "en" -> Locale.ENGLISH
+            else -> if (Locale.getDefault().language == "es") Locale("es") else Locale.ENGLISH
+        }
     val configuration = Configuration(context.resources.configuration)
     configuration.setLocale(locale)
     return context.createConfigurationContext(configuration)

@@ -22,7 +22,11 @@ struct TimerScreen: View {
     var body: some View {
         let accent = Color.ticklyAccent(at: store.accent.index)
         ZStack {
-            TicklyBackground(accent: accent, animated: store.engine.settings.animatedBackground, sceneActive: store.isSceneActive)
+            TicklyBackground(
+                accent: accent,
+                animated: store.engine.settings.animatedBackground,
+                sceneActive: store.isSceneActive
+            )
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 26) {
                     HStack {
@@ -38,7 +42,10 @@ struct TimerScreen: View {
 
                     Spacer(minLength: 8)
                     VStack(spacing: 14) {
-                        Text(store.phaseName.uppercased()).font(.caption.weight(.bold)).tracking(2).foregroundStyle(accent)
+                        Text(store.phaseName.uppercased())
+                            .font(.caption.weight(.bold))
+                            .tracking(2)
+                            .foregroundStyle(accent)
                         ZStack {
                             Circle().stroke(.white.opacity(0.10), lineWidth: 10)
                             Circle()
@@ -46,12 +53,18 @@ struct TimerScreen: View {
                                 .stroke(accent, style: .init(lineWidth: 10, lineCap: .round))
                                 .rotationEffect(.degrees(-90))
                                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: store.progress)
-                            Text(store.timeText).font(.system(size: 66, weight: .thin, design: .rounded)).monospacedDigit()
+                            Text(store.timeText)
+                                .font(.system(size: 66, weight: .thin, design: .rounded))
+                                .monospacedDigit()
                         }
                         .frame(width: 220, height: 220)
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("\(store.phaseName), \(store.timeText)")
-                        Text("\(store.engine.completedFocusBlocks) / \(store.engine.settings.blocksUntilLongBreak) \(store.strings.text(.blocks))")
+                        Text(
+                            "\(store.engine.completedFocusBlocks) / "
+                                + "\(store.engine.settings.blocksUntilLongBreak) "
+                                + "\(store.strings.text(.blocks))"
+                        )
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 22)
@@ -66,9 +79,17 @@ struct TimerScreen: View {
                         .buttonStyle(.plain).foregroundStyle(.black).background(accent, in: Capsule())
                         .accessibilityHint(store.isRunning ? store.strings.text(.pause) : store.strings.text(.start))
                         HStack(spacing: 12) {
-                            Button { actionToConfirm = .restart } label: { Label(store.strings.text(.restart), systemImage: "arrow.counterclockwise") }
-                            Button { store.engine.phase == .focus ? actionToConfirm = .skip : store.skip() } label: { Label(store.strings.text(.skip), systemImage: "forward.fill") }
-                            Button { actionToConfirm = .reset } label: { Label(store.strings.text(.reset), systemImage: "stop.fill") }
+                            Button { actionToConfirm = .restart } label: {
+                                Label(store.strings.text(.restart), systemImage: "arrow.counterclockwise")
+                            }
+                            Button {
+                                store.engine.phase == .focus ? actionToConfirm = .skip : store.skip()
+                            } label: {
+                                Label(store.strings.text(.skip), systemImage: "forward.fill")
+                            }
+                            Button { actionToConfirm = .reset } label: {
+                                Label(store.strings.text(.reset), systemImage: "stop.fill")
+                            }
                         }
                         .font(.footnote.weight(.medium)).foregroundStyle(accent)
                         .buttonStyle(.plain)
@@ -92,9 +113,11 @@ struct TimerScreen: View {
         }
         .alert(item: $actionToConfirm) { action in
             Alert(
-                title: Text(action == .restart ? store.strings.text(.restartTitle) : action == .reset ? store.strings.text(.resetTitle) : store.strings.text(.abandonTitle)),
-                message: Text(action == .restart ? store.strings.text(.restartMessage) : action == .reset ? store.strings.text(.resetMessage) : store.strings.text(.abandonMessage)),
-                primaryButton: .destructive(Text(store.strings.text(.confirm))) { if action == .restart { store.restart() } else if action == .reset { store.reset() } else { store.skip() } },
+                title: Text(confirmationTitle(for: action)),
+                message: Text(confirmationMessage(for: action)),
+                primaryButton: .destructive(Text(store.strings.text(.confirm))) {
+                    confirm(action)
+                },
                 secondaryButton: .cancel(Text(store.strings.text(.cancel)))
             )
         }
@@ -102,5 +125,29 @@ struct TimerScreen: View {
             Button(store.strings.text(.allowNotifications)) { store.requestNotifications() }
             Button(store.strings.text(.cancel), role: .cancel) { }
         } message: { Text(store.strings.text(.notificationsExplanation)) }
+    }
+
+    private func confirmationTitle(for action: TimerAction) -> String {
+        switch action {
+        case .restart: store.strings.text(.restartTitle)
+        case .reset: store.strings.text(.resetTitle)
+        case .skip: store.strings.text(.abandonTitle)
+        }
+    }
+
+    private func confirmationMessage(for action: TimerAction) -> String {
+        switch action {
+        case .restart: store.strings.text(.restartMessage)
+        case .reset: store.strings.text(.resetMessage)
+        case .skip: store.strings.text(.abandonMessage)
+        }
+    }
+
+    private func confirm(_ action: TimerAction) {
+        switch action {
+        case .restart: store.restart()
+        case .reset: store.reset()
+        case .skip: store.skip()
+        }
     }
 }

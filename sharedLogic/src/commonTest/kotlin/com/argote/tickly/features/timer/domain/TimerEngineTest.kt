@@ -134,7 +134,11 @@ class TimerEngineTest {
         restoredRunning.tick(25 * MINUTE + 100)
         assertEquals(TimerStatus.FINISHED, restoredRunning.status)
 
-        val paused = TimerEngine().also { it.start(0); it.pause(20_000) }
+        val paused =
+            TimerEngine().also {
+                it.start(0)
+                it.pause(20_000)
+            }
         val restoredPaused = TimerEngine(paused.serialize())
         assertEquals(TimerStatus.PAUSED, restoredPaused.status)
         assertEquals(25 * MINUTE - 20_000, restoredPaused.remainingMillis(900_000))
@@ -170,15 +174,23 @@ class TimerEngineTest {
         assertEquals(40 * MINUTE - 10, timer.remainingMillis(100))
     }
 
-    private fun completeFocus(timer: TimerEngine, startAt: Long) {
+    private fun completeFocus(
+        timer: TimerEngine,
+        startAt: Long,
+    ) {
         timer.start(startAt)
         timer.tick(startAt + timer.intervalDurationMillis)
     }
 
-    private fun completeBreak(timer: TimerEngine, startAt: Long) {
+    private fun completeBreak(
+        timer: TimerEngine,
+        startAt: Long,
+    ) {
         timer.start(startAt)
         timer.tick(startAt + timer.intervalDurationMillis)
     }
 
-    private companion object { const val MINUTE = 60_000L }
+    private companion object {
+        const val MINUTE = 60_000L
+    }
 }

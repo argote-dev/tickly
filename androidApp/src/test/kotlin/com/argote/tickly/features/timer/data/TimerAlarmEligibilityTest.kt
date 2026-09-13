@@ -17,8 +17,16 @@ private fun eligible(
     enginePhase: String = phase,
     now: Long = token,
 ): Boolean = isAlarmNotificationEligible(
-    token, phase, scheduledToken, scheduledPhase, lastNotifiedToken, lastNotifiedPhase,
-    status, engineDeadline, enginePhase, now,
+    token,
+    phase,
+    scheduledToken,
+    scheduledPhase,
+    lastNotifiedToken,
+    lastNotifiedPhase,
+    status,
+    engineDeadline,
+    enginePhase,
+    now,
 )
 
 class TimerAlarmEligibilityTest {
@@ -40,19 +48,24 @@ class TimerAlarmEligibilityTest {
 
     @Test
     fun `accepts matching interval already finished by the UI`() {
-        assertTrue(eligible(
-            status = TimerStatus.FINISHED,
-            engineDeadline = 0L,
-        ))
+        assertTrue(
+            eligible(
+                status = TimerStatus.FINISHED,
+                engineDeadline = 0L,
+            ),
+        )
     }
 
     @Test
     fun `rejects finished UI state for a different phase`() {
-        assertEquals(false, eligible(
-            status = TimerStatus.FINISHED,
-            engineDeadline = 0L,
-            enginePhase = "SHORT_BREAK",
-        ))
+        assertEquals(
+            false,
+            eligible(
+                status = TimerStatus.FINISHED,
+                engineDeadline = 0L,
+                enginePhase = "SHORT_BREAK",
+            ),
+        )
     }
 
     @Test

@@ -11,4 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun Section(title: String) { Spacer(Modifier.height(12.dp)); HorizontalDivider(); Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp)) }
+internal fun Section(title: String) {
+    Spacer(Modifier.height(12.dp))
+    HorizontalDivider()
+    Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
+}

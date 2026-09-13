@@ -25,9 +25,9 @@ func averageHue(in rectangle: [Double]) -> Double {
     var sampleCount = 0
     let xRange = Int(Double(bitmap.pixelsWide) * rectangle[0])..<Int(Double(bitmap.pixelsWide) * rectangle[2])
     let yRange = Int(Double(bitmap.pixelsHigh) * rectangle[1])..<Int(Double(bitmap.pixelsHigh) * rectangle[3])
-    for y in yRange {
-        for x in xRange {
-            guard let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
+    for verticalPosition in yRange {
+        for horizontalPosition in xRange {
+            guard let color = bitmap.colorAt(x: horizontalPosition, y: verticalPosition)?.usingColorSpace(.deviceRGB),
                   color.saturationComponent > 0.18,
                   color.brightnessComponent > (isIOS ? 0.6 : 0.2) else { continue }
             let angle = Double(color.hueComponent) * 2 * Double.pi

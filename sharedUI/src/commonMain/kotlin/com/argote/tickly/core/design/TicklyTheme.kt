@@ -4,15 +4,25 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.graphics.Color
 
-private val accentColors = listOf(
-    Color(0xFFB8A1FF), Color(0xFF69D7C3), Color(0xFF8CB8FF),
-    Color(0xFFFFA7C1), Color(0xFFFFC980), Color(0xFFC2DC70),
-)
+private val accentColors =
+    listOf(
+        Color(0xFFB8A1FF),
+        Color(0xFF69D7C3),
+        Color(0xFF8CB8FF),
+        Color(0xFFFFA7C1),
+        Color(0xFFFFC980),
+        Color(0xFFC2DC70),
+    )
 
-private val accentContainers = listOf(
-    Color(0xFF382F4A), Color(0xFF2B463F), Color(0xFF30424F),
-    Color(0xFF4A3040), Color(0xFF4A3B2D), Color(0xFF3E482A),
-)
+private val accentContainers =
+    listOf(
+        Color(0xFF382F4A),
+        Color(0xFF2B463F),
+        Color(0xFF30424F),
+        Color(0xFF4A3040),
+        Color(0xFF4A3B2D),
+        Color(0xFF3E482A),
+    )
 
 private val appBackground = Color(0xFF101015)
 private val appSurface = Color(0xFF1B1920)
@@ -87,14 +97,21 @@ fun colorSchemeForAccent(index: Int): ColorScheme {
     )
 }
 
-private fun blend(start: Color, end: Color, fraction: Float): Color = Color(
+private fun blend(
+    start: Color,
+    end: Color,
+    fraction: Float,
+): Color = Color(
     red = start.red + (end.red - start.red) * fraction,
     green = start.green + (end.green - start.green) * fraction,
     blue = start.blue + (end.blue - start.blue) * fraction,
     alpha = 1f,
 )
 
-private fun darken(color: Color, amount: Float): Color = Color(
+private fun darken(
+    color: Color,
+    amount: Float,
+): Color = Color(
     red = color.red * amount,
     green = color.green * amount,
     blue = color.blue * amount,

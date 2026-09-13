@@ -40,24 +40,28 @@ fun AndroidTicklyApp(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {
-                isActive = true
-                reducedMotion = Settings.Global.getFloat(
-                    context.contentResolver,
-                    Settings.Global.ANIMATOR_DURATION_SCALE,
-                    1f,
-                ) == 0f
-                controller.tick(System.currentTimeMillis())
-                onSnapshotChanged(
-                    engine.serialize(),
-                    engine.deadlineMillis,
-                    engine.settings.keepScreenOn && engine.phase.name == "FOCUS" && engine.status.name == "RUNNING",
-                )
-                changeVersion++
+        val observer =
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    isActive = true
+                    reducedMotion = Settings.Global.getFloat(
+                        context.contentResolver,
+                        Settings.Global.ANIMATOR_DURATION_SCALE,
+                        1f,
+                    ) == 0f
+                    controller.tick(System.currentTimeMillis())
+                    onSnapshotChanged(
+                        engine.serialize(),
+                        engine.deadlineMillis,
+                        engine.settings.keepScreenOn && engine.phase.name == "FOCUS" && engine.status.name == "RUNNING",
+                    )
+                    changeVersion++
+                }
+
+                override fun onStop(owner: LifecycleOwner) {
+                    isActive = false
+                }
             }
-            override fun onStop(owner: LifecycleOwner) { isActive = false }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -76,7 +80,15 @@ fun AndroidTicklyApp(
     TicklyApp(
         controller = controller,
         reducedMotion = reducedMotion,
-        systemLanguage = if (java.util.Locale.getDefault().language == "es") "es" else "en",
+        systemLanguage =
+        if (java.util.Locale
+                .getDefault()
+                .language == "es"
+        ) {
+            "es"
+        } else {
+            "en"
+        },
         onPreviewSound = soundPreviewer::preview,
         isActive = isActive,
         backRequest = backRequest,

@@ -54,3 +54,11 @@ Ejecuta los comandos desde la raíz del repositorio:
 ```
 
 Para compilar y ejecutar iOS, abre [`iosApp/`](iosApp) en Xcode y usa su esquema de ejecución.
+
+## Calidad
+
+Las puertas locales y de CI están documentadas en [quality gates](docs/quality-gates.md). Para ejecutar toda la validación:
+
+```bash
+scripts/quality-gates.sh
+```

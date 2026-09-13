@@ -7,5 +7,8 @@ import com.argote.tickly.features.timer.data.TimerBootReceiver as FeatureTimerBo
 
 /** Compatibility component for boot broadcasts targeting the pre-slice receiver name. */
 class TimerBootReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = FeatureTimerBootReceiver().onReceive(context, intent)
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) = FeatureTimerBootReceiver().onReceive(context, intent)
 }

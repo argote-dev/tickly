@@ -19,7 +19,12 @@ final class TimerStore: ObservableObject {
     private var lastSavedSnapshot: String?
     private var notificationGeneration = 0
 
-    init(snapshots: TimerSnapshotRepository, notifications: TimerNotificationScheduler, effects: TimerPlatformEffects, now: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) }) {
+    init(
+        snapshots: TimerSnapshotRepository,
+        notifications: TimerNotificationScheduler,
+        effects: TimerPlatformEffects,
+        now: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) }
+    ) {
         self.snapshots = snapshots
         self.notifications = notifications
         self.effects = effects
@@ -151,13 +156,24 @@ final class TimerStore: ObservableObject {
         }
         let deadline = engine.deadlineMillis
         let phaseText = phaseName
-        let finished = strings.spanish ? "Tu intervalo de \(phaseText.lowercased()) terminó." : "Your \(phaseText.lowercased()) interval has ended."
+        let finished = strings.spanish
+            ? "Tu intervalo de \(phaseText.lowercased()) terminó."
+            : "Your \(phaseText.lowercased()) interval has ended."
         let soundIndex = Int(engine.settings.soundIndex)
         Task { [weak self] in
             guard let self, await notifications.isAuthorized() else { return }
-            guard notificationGeneration == generation, engine.status == .running, engine.deadlineMillis == deadline else { return }
+            guard notificationGeneration == generation,
+                  engine.status == .running,
+                  engine.deadlineMillis == deadline else {
+                return
+            }
             let remainingSeconds = Double(engine.remainingMillis(nowMillis: now())) / 1_000
-            notifications.schedule(after: remainingSeconds, title: "Tickly · \(phaseText)", body: finished, soundIndex: soundIndex)
+            notifications.schedule(
+                after: remainingSeconds,
+                title: "Tickly · \(phaseText)",
+                body: finished,
+                soundIndex: soundIndex
+            )
         }
         updateScreenIdleTimer()
     }
@@ -169,7 +185,9 @@ final class TimerStore: ObservableObject {
         Task { notificationsUnavailable = await notifications.isDenied() }
     }
     private func updateScreenIdleTimer() {
-        effects.setScreenIdleDisabled(isSceneActive && isRunning && engine.phase == .focus && engine.settings.keepScreenOn)
+        effects.setScreenIdleDisabled(
+            isSceneActive && isRunning && engine.phase == .focus && engine.settings.keepScreenOn
+        )
     }
     private func persist() {
         let snapshot = engine.serialize()

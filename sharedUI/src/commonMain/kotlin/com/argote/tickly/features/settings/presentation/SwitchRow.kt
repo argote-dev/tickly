@@ -14,4 +14,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun SwitchRow(label: String, checked: Boolean, update: (Boolean) -> Unit) = Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text(label, Modifier.weight(1f)); Switch(checked = checked, onCheckedChange = update, modifier = Modifier.semantics { contentDescription = label }) }
+internal fun SwitchRow(
+    label: String,
+    checked: Boolean,
+    update: (Boolean) -> Unit,
+) = Row(
+    Modifier.fillMaxWidth().padding(vertical = 10.dp),
+    horizontalArrangement = Arrangement.SpaceBetween,
+    verticalAlignment = Alignment.CenterVertically,
+) {
+    Text(label, Modifier.weight(1f))
+    Switch(
+        checked = checked,
+        onCheckedChange = update,
+        modifier =
+        Modifier.semantics {
+            contentDescription =
+                label
+        },
+    )
+}

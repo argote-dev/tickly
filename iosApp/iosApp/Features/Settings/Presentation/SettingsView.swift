@@ -1,5 +1,5 @@
-import SwiftUI
 import SharedLogic
+import SwiftUI
 
 struct SettingsView: View {
     let settings: TimerSettings
@@ -26,7 +26,11 @@ struct SettingsView: View {
                     Stepper("\(strings.text(.focusMinutes)): \(focus)", value: $focus, in: 1...180)
                     Stepper("\(strings.text(.shortBreakMinutes)): \(shortBreak)", value: $shortBreak, in: 1...60)
                     Stepper("\(strings.text(.longBreakMinutes)): \(longBreak)", value: $longBreak, in: 1...60)
-                    Stepper("\(strings.text(.blocksUntilLongBreak)): \(blocks)", value: $blocks, in: 2...8)
+                    Stepper(
+                        "\(strings.text(.blocksUntilLongBreak)): \(blocks)",
+                        value: $blocks,
+                        in: 2...8
+                    )
                 }
                 Section(strings.text(.appearance)) {
                     VStack(alignment: .leading, spacing: 10) {
@@ -59,22 +63,36 @@ struct SettingsView: View {
                     // cannot retain the previously saved tint.
                     .tint(draftAccent)
                     .id(accent)
-                    if sound >= 0 { Button(strings.text(.preview)) { onPreviewSound(sound) } }
+                    if sound >= 0 {
+                        Button(strings.text(.preview)) { onPreviewSound(sound) }
+                    }
                     Toggle(strings.text(.vibration), isOn: $vibration)
-                    Text(strings.text(.vibrationSystemNote)).font(.footnote).foregroundStyle(.secondary)
+                    Text(strings.text(.vibrationSystemNote))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
                 Section {
                     Toggle(strings.text(.keepScreenOn), isOn: $keepScreenOn)
                     Picker(strings.text(.language), selection: $language) {
-                        Text(strings.text(.system)).tag("system"); Text(strings.text(.spanish)).tag("es"); Text(strings.text(.english)).tag("en")
+                        Text(strings.text(.system)).tag("system")
+                        Text(strings.text(.spanish)).tag("es")
+                        Text(strings.text(.english)).tag("en")
                     }
                     .tint(draftAccent)
                     .id(accent)
                 }
             }
-            .scrollContentBackground(.hidden).background(Color.black)
+            .scrollContentBackground(.hidden)
+            .background(Color.black)
             .navigationTitle(strings.text(.settings))
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(strings.text(.done)) { save(); dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(strings.text(.done)) {
+                        save()
+                        dismiss()
+                    }
+                }
+            }
             .onAppear { load() }
             .onDisappear { save() }
         }
@@ -86,11 +104,32 @@ struct SettingsView: View {
 
     private func load() {
         let currentSettings = settings
-        focus = Int(currentSettings.focusMinutes); shortBreak = Int(currentSettings.shortBreakMinutes); longBreak = Int(currentSettings.longBreakMinutes); blocks = Int(currentSettings.blocksUntilLongBreak)
-        accent = Int(currentSettings.accentIndex); sound = Int(currentSettings.soundIndex); vibration = currentSettings.vibrationEnabled; animated = currentSettings.animatedBackground; keepScreenOn = currentSettings.keepScreenOn; language = currentSettings.language
+        focus = Int(currentSettings.focusMinutes)
+        shortBreak = Int(currentSettings.shortBreakMinutes)
+        longBreak = Int(currentSettings.longBreakMinutes)
+        blocks = Int(currentSettings.blocksUntilLongBreak)
+        accent = Int(currentSettings.accentIndex)
+        sound = Int(currentSettings.soundIndex)
+        vibration = currentSettings.vibrationEnabled
+        animated = currentSettings.animatedBackground
+        keepScreenOn = currentSettings.keepScreenOn
+        language = currentSettings.language
     }
 
     private func save() {
-        onSave(TimerSettings(focusMinutes: Int32(focus), shortBreakMinutes: Int32(shortBreak), longBreakMinutes: Int32(longBreak), blocksUntilLongBreak: Int32(blocks), accentIndex: Int32(accent), soundIndex: Int32(sound), vibrationEnabled: vibration, animatedBackground: animated, keepScreenOn: keepScreenOn, language: language))
+        onSave(
+            TimerSettings(
+                focusMinutes: Int32(focus),
+                shortBreakMinutes: Int32(shortBreak),
+                longBreakMinutes: Int32(longBreak),
+                blocksUntilLongBreak: Int32(blocks),
+                accentIndex: Int32(accent),
+                soundIndex: Int32(sound),
+                vibrationEnabled: vibration,
+                animatedBackground: animated,
+                keepScreenOn: keepScreenOn,
+                language: language
+            )
+        )
     }
 }

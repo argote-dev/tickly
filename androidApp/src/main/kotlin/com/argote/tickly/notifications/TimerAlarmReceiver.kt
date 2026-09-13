@@ -11,5 +11,8 @@ import com.argote.tickly.features.timer.data.TimerAlarmReceiver as FeatureTimerA
  * declared in the manifest and delegate to the feature implementation.
  */
 class TimerAlarmReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) = FeatureTimerAlarmReceiver().onReceive(context, intent)
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) = FeatureTimerAlarmReceiver().onReceive(context, intent)
 }

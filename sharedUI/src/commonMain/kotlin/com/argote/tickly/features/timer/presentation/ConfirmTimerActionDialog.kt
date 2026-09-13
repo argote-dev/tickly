@@ -16,16 +16,24 @@ fun ConfirmTimerActionDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(when (action) {
-            TimerAction.Restart -> copy.restart
-            TimerAction.Skip -> copy.skipFocus
-            TimerAction.Reset -> copy.startOver
-        }) },
-        text = { Text(when (action) {
-            TimerAction.Restart -> copy.restartMessage
-            TimerAction.Skip -> copy.skipMessage
-            TimerAction.Reset -> copy.resetMessage
-        }) },
+        title = {
+            Text(
+                when (action) {
+                    TimerAction.Restart -> copy.restart
+                    TimerAction.Skip -> copy.skipFocus
+                    TimerAction.Reset -> copy.startOver
+                },
+            )
+        },
+        text = {
+            Text(
+                when (action) {
+                    TimerAction.Restart -> copy.restartMessage
+                    TimerAction.Skip -> copy.skipMessage
+                    TimerAction.Reset -> copy.resetMessage
+                },
+            )
+        },
         confirmButton = { Button(onClick = confirm) { Text(copy.confirm) } },
         dismissButton = { OutlinedButton(onClick = onDismiss) { Text(copy.cancel) } },
     )

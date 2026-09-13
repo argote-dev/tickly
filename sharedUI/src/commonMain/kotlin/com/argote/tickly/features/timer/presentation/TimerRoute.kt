@@ -47,17 +47,25 @@ fun TimerRoute(
             copy = copy,
             revision = revision,
             onStartPause = {
-                if (engine.status == TimerStatus.RUNNING) controller.pause(currentTimeMillis())
-                else {
-                    if (!firstStartRequested) { onFirstStart(); firstStartRequested = true }
+                if (engine.status == TimerStatus.RUNNING) {
+                    controller.pause(currentTimeMillis())
+                } else {
+                    if (!firstStartRequested) {
+                        onFirstStart()
+                        firstStartRequested = true
+                    }
                     controller.start(currentTimeMillis())
                 }
                 onChanged()
             },
             onRestart = { dialog = TimerAction.Restart },
             onSkip = {
-                if (engine.phase == TimerPhase.FOCUS) dialog = TimerAction.Skip
-                else { controller.skip(currentTimeMillis()); onChanged() }
+                if (engine.phase == TimerPhase.FOCUS) {
+                    dialog = TimerAction.Skip
+                } else {
+                    controller.skip(currentTimeMillis())
+                    onChanged()
+                }
             },
             onReset = { dialog = TimerAction.Reset },
             onSettings = onSettings,
@@ -76,4 +84,6 @@ fun TimerRoute(
     }
 }
 
-private fun currentTimeMillis() = kotlin.time.Clock.System.now().toEpochMilliseconds()
+private fun currentTimeMillis() = kotlin.time.Clock.System
+    .now()
+    .toEpochMilliseconds()

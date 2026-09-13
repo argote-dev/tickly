@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class TicklyThemeTest {
-
     @Test
     fun accentSchemesGiveEachSelectionItsOwnTonalContainer() {
         val containers = (0..5).map { colorSchemeForAccent(it).secondaryContainer }
@@ -46,18 +45,21 @@ class TicklyThemeTest {
         }
     }
 
-    private fun assertContrastAtLeast(foreground: Color, background: Color, minimum: Double) {
-        val contrast = (foreground.relativeLuminance() + 0.05) /
-            (background.relativeLuminance() + 0.05)
-        val inverseContrast = (background.relativeLuminance() + 0.05) /
-            (foreground.relativeLuminance() + 0.05)
+    private fun assertContrastAtLeast(
+        foreground: Color,
+        background: Color,
+        minimum: Double,
+    ) {
+        val contrast =
+            (foreground.relativeLuminance() + 0.05) /
+                (background.relativeLuminance() + 0.05)
+        val inverseContrast =
+            (background.relativeLuminance() + 0.05) /
+                (foreground.relativeLuminance() + 0.05)
         assertTrue(maxOf(contrast, inverseContrast) >= minimum)
     }
 
-    private fun Color.relativeLuminance(): Double =
-        (0.2126 * red.linearized()) + (0.7152 * green.linearized()) + (0.0722 * blue.linearized())
+    private fun Color.relativeLuminance(): Double = (0.2126 * red.linearized()) + (0.7152 * green.linearized()) + (0.0722 * blue.linearized())
 
-    private fun Float.linearized(): Double =
-        if (this <= 0.04045f) this / 12.92 else ((this + 0.055) / 1.055).pow(2.4)
-
+    private fun Float.linearized(): Double = if (this <= 0.04045f) this / 12.92 else ((this + 0.055) / 1.055).pow(2.4)
 }
