@@ -40,7 +40,7 @@ El repositorio privado es [`argote-dev/tickly`](https://github.com/argote-dev/ti
 
 ## Herramientas y correcciones
 
-- Android necesita JDK 17 y Android SDK 36 (`local.properties` ignorado o `ANDROID_HOME`).
+- Android necesita JDK 17, `compileSdk` 37 y la plataforma Android SDK 37.0 (`local.properties` ignorado o `ANDROID_HOME`). `minSdk` 24 y `targetSdk` 36 no cambian.
 - iOS necesita macOS Apple Silicon, Xcode 26.6, un runtime de simulador iOS 26 y las herramientas Gradle/Android anteriores. CI fija Xcode 26.6 y usa `macos-26`.
 - La primera ejecución descarga dependencias Gradle y SwiftLint; las siguientes reutilizan las herramientas locales. No se instala SwiftLint globalmente.
 - Para corregir Kotlin intencionalmente: `./gradlew ktlintFormat`. Después ejecuta otra vez el gate; el formateador no resuelve todas las infracciones de nombres.
