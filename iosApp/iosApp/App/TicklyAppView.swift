@@ -5,6 +5,7 @@ struct TicklyAppView: View {
     @StateObject private var store: TimerStore
     private let soundPreview: SoundPreviewing
     @State private var settingsShown = false
+    @State private var showSplash = true
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -19,7 +20,16 @@ struct TicklyAppView: View {
 
     var body: some View {
         let accent = Color.ticklyAccent(at: store.accent.index)
-        TimerScreen(store: store) { settingsShown = true }
+        ZStack {
+            TimerScreen(store: store) { settingsShown = true }
+                .accessibilityHidden(showSplash)
+                .allowsHitTesting(!showSplash)
+            if showSplash {
+                TicklySplash { showSplash = false }
+                    .transition(.opacity)
+                    .zIndex(1)
+            }
+        }
             .preferredColorScheme(.dark)
             .tint(accent)
             .sheet(isPresented: $settingsShown) {

@@ -32,17 +32,20 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.argote.tickly.R
+import com.argote.tickly.core.design.TicklySplash
 import com.argote.tickly.core.design.colorSchemeForAccent
 import com.argote.tickly.features.timer.data.TimerNotifications
 import com.argote.tickly.features.timer.domain.TimerEngine
@@ -58,6 +61,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val permissionPrefs = remember { getSharedPreferences("tickly_timer", MODE_PRIVATE) }
+            var showSplash by rememberSaveable { mutableStateOf(true) }
             var showNotificationContext by remember { mutableStateOf(false) }
             var notificationUnavailable by remember { mutableStateOf(false) }
             var exactAlarmMissing by remember { mutableStateOf(false) }
@@ -138,7 +142,14 @@ class MainActivity : ComponentActivity() {
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .padding(top = if (showAlertBanner) 120.dp else 0.dp),
+                            .padding(top = if (showAlertBanner && !showSplash) 120.dp else 0.dp)
+                            .then(
+                                if (showSplash) {
+                                    Modifier.clearAndSetSemantics { }
+                                } else {
+                                    Modifier
+                                },
+                            ),
                     ) {
                         AndroidTicklyApp(
                             context = this@MainActivity,
@@ -160,7 +171,17 @@ class MainActivity : ComponentActivity() {
                             },
                         )
                     }
-                    if (showAlertBanner) {
+                    if (showSplash) {
+                        TicklySplash(
+                            reducedMotion = Settings.Global.getFloat(
+                                contentResolver,
+                                Settings.Global.ANIMATOR_DURATION_SCALE,
+                                1f,
+                            ) == 0f,
+                            onFinished = { showSplash = false },
+                        )
+                    }
+                    if (showAlertBanner && !showSplash) {
                         AlertStatusBanner(
                             context = displayContext,
                             notificationUnavailable = notificationUnavailable,
@@ -184,7 +205,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                if (showNotificationContext) {
+                if (showNotificationContext && !showSplash) {
                     AlertDialog(
                         onDismissRequest = ::dismissNotificationContext,
                         title = { Text(displayContext.getString(R.string.notification_permission_title)) },
