@@ -6,6 +6,14 @@ La definición de producto se encuentra en el [diseño de producto](docs/product
 
 > La evidencia de compilación, pruebas y smoke tests está en la [validación](docs/validation.md).
 
+## Capturas de pantalla
+
+Un vistazo al temporizador en Android e iOS y a los ajustes de personalización. Pulsa cualquier captura para verla a tamaño completo.
+
+| Temporizador · Android | Temporizador · iOS | Ajustes · iOS |
+| :---: | :---: | :---: |
+| [<img src="docs/screenshots/android.png" alt="Temporizador de Tickly en Android, listo para iniciar un enfoque de 25 minutos" width="250">](docs/screenshots/android.png) | [<img src="docs/screenshots/ios.png" alt="Temporizador de Tickly en iOS, con progreso circular y controles de enfoque" width="250">](docs/screenshots/ios.png) | [<img src="docs/screenshots/ios-theme-settings.png" alt="Ajustes de Tickly en iOS: intervalos, colores de acento, fondo animado y avisos" width="250">](docs/screenshots/ios-theme-settings.png) |
+
 ## Capacidades implementadas
 
 - Temporizador de enfoque, descanso corto y descanso largo.
