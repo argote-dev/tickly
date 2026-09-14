@@ -13,20 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - name: Install Android SDK 37.0
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Run Android quality gates
         run: scripts/quality-gates.sh android
       - name: Upload Android reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-quality-reports
           path: |
@@ -39,7 +39,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Select Xcode 26.6
         run: |
           if [ -d /Applications/Xcode_26.6.app ]; then
@@ -48,19 +48,19 @@ jobs:
             echo "Xcode 26.6 is required on the macos-26 runner." >&2
             exit 1
           fi
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
       - name: Install Android SDK 37.0 for Gradle configuration
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Run iOS quality gates
         run: scripts/quality-gates.sh ios
       - name: Upload iOS reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-quality-reports
           path: |
