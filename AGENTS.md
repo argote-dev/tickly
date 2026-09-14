@@ -34,7 +34,21 @@ Tests use `kotlin.test`, including `@Test` and assertions. Name test classes/fil
 
 ## Commit & Pull Request Guidelines
 
-This repository was initialized with its first commit on 12 September 2026, so there is no earlier history from which to infer conventions. Use concise, imperative commit subjects and keep changes focused. PRs should describe the change, link relevant issues, list validation performed, and include screenshots for UI changes. No PR template is present.
+Use concise, imperative commit subjects and keep changes focused. PRs should describe the change, link relevant issues, list validation performed, and include screenshots for UI changes. No PR template is present.
+
+## GitHub Flow & GitOps
+
+Use GitHub Flow for every change, including documentation, configuration, and Dependabot updates:
+
+1. Start a short-lived, descriptive branch from the current `origin/main`; keep unrelated work on separate branches.
+2. Implement and validate on that branch using the quality gates in `docs/quality-gates.md`.
+3. Push the branch and open a PR targeting `main`, with validation evidence and any remaining limitations.
+4. Address feedback and merge only after approval and successful `Android quality` and `iOS quality` checks. Agents leave merge to the user unless explicitly authorized. Do not push directly to `main` or bypass failed checks.
+5. Delete the completed branch after merge. Reverts and hotfixes also go through a branch and PR.
+
+GitOps is the operational direction: keep desired operational state declarative and versioned in Git, change it through PRs, and keep secrets and signing credentials outside Git. Where GitOps is implemented, agents must pull and continuously reconcile that state; a GitHub Actions build alone is CI, not a complete GitOps implementation. Rollbacks should restore a known desired state through a reviewed revert rather than an untracked manual change.
+
+The deployment targets, environments, and reconciliation mechanism are not yet defined. Do not assume Kubernetes, install a reconciler, or configure store publishing without an explicit decision. Branch protection and required checks also remain pending configuration; the workflow above applies even before enforcement is enabled. GitHub PR approval is separate from receipt-driven agent reviews, which remain `disabled/unmanaged` until the user explicitly enables them.
 
 ## Security & Configuration
 
