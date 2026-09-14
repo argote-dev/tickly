@@ -6,7 +6,7 @@
 - `sharedLogic/`: Shared Kotlin logic in `src/commonMain/kotlin`; platform implementations in `androidMain` and `iosMain`.
 - `sharedUI/`: Shared Compose UI in `src/commonMain/kotlin`; shared assets in `src/commonMain/composeResources`.
 - `iosApp/iosApp/`: SwiftUI entry point and `Assets.xcassets`; open the iOS project in Xcode.
-- Tests live in module source sets such as `commonTest`, `androidHostTest`, and `iosTest`. Dependency versions are centralized in `gradle/libs.versions.toml`.
+- Existing Kotlin test sources live in source sets such as `commonTest`, `androidHostTest`, and `iosTest`; they are historical evidence and are not part of the current gates. Dependency versions are centralized in `gradle/libs.versions.toml`.
 
 Keep reusable logic in `sharedLogic` and reusable UI in `sharedUI`; isolate platform APIs in platform-specific source sets.
 
@@ -17,8 +17,6 @@ Before adding or moving source files, read `docs/code-organization.md`. Organize
 Run commands from the repository root using the Gradle wrapper:
 
 - `./gradlew :androidApp:assembleDebug`: Build the Android debug APK.
-- `./gradlew :sharedUI:testAndroidHostTest :sharedLogic:testAndroidHostTest`: Run Android host tests for both shared modules.
-- `./gradlew :sharedLogic:iosSimulatorArm64Test`: Run shared logic tests on an ARM64 iOS simulator; requires macOS and Xcode.
 
 Run Android through the IDE's run configuration. Open `iosApp/` in Xcode to build and run iOS.
 
@@ -26,11 +24,13 @@ Run Android through the IDE's run configuration. Open `iosApp/` in Xcode to buil
 
 Follow Kotlin official style, configured in `gradle.properties`, with four-space indentation. Use the existing `com.argote.tickly` package hierarchy. Name classes and composables in PascalCase, and ordinary functions and properties in camelCase. Keep each top-level class, interface, enum, or object in its own same-named Kotlin file; apply the same rule to Swift classes, structs, enums, and protocols. Keep nested implementation types with their owner. Each named `@Composable` function and SwiftUI view also gets its own same-named file; preserve state/effect ownership when extracting UI components. Use the pinned ktlint and SwiftLint configuration; see `docs/quality-gates.md` for formatting commands and rule policy.
 
-Before delivery, run `./scripts/quality-gates.sh all` on macOS with both toolchains, or run the available platform gate and explicitly report the unvalidated gate. Read `docs/quality-gates.md` when changing quality configuration or preparing a PR.
+Before delivery, run `./scripts/quality-gates.sh all` on macOS with both toolchains, or run the available platform gate and explicitly report the unvalidated gate. These gates cover style, static analysis and builds only; run applicable Maestro flows separately when they exist. Read `docs/quality-gates.md` when changing quality configuration or preparing a PR.
 
 ## Testing Guidelines
 
-Tests use `kotlin.test`, including `@Test` and assertions. Name test classes/files `*Test` and use descriptive test method names. Put platform-independent tests in `commonTest` and platform-dependent tests in the matching source set. Add regression tests for behavior changes. No coverage threshold is configured.
+Write and run behavior and regression tests exclusively with Maestro. No Maestro flows are versioned yet: add the applicable flow and run it with Maestro before declaring a test validated. Existing Kotlin `*Test` sources remain historical evidence and are neither extended nor run under the current policy. Builds, lint and static analysis are quality checks, not test evidence.
+
+Keep `scripts/` free of Python scripts; express application test automation as Maestro flows instead.
 
 ## Commit & Pull Request Guidelines
 

@@ -11,15 +11,11 @@ run_android() {
     "${repository_root}/gradlew" --no-daemon \
         qualityKtlintCheck \
         :androidApp:lintDebug \
-        :androidApp:testDebugUnitTest \
-        :sharedLogic:testAndroidHostTest \
-        :sharedUI:testAndroidHostTest \
         :androidApp:assembleDebug
 }
 
 run_ios() {
     SWIFTLINT_FIX=0 "${script_dir}/swiftlint.sh"
-    "${repository_root}/gradlew" --no-daemon :sharedLogic:iosSimulatorArm64Test
     mkdir -p "${repository_root}/build/reports"
     xcodebuild \
         -project "${repository_root}/iosApp/iosApp.xcodeproj" \

@@ -13,16 +13,20 @@ scripts/quality-gates.sh
 # Sólo estilo Kotlin y Swift
 scripts/quality-gates.sh lint
 
-# Kotlin/Android: estilo, lint, pruebas host y APK debug
+# Kotlin/Android: estilo, lint y APK debug
 scripts/quality-gates.sh android
 
-# Swift/iOS: SwiftLint, pruebas KMP iOS y compilación del simulador
+# Swift/iOS: SwiftLint y compilación del simulador
 scripts/quality-gates.sh ios
 ```
 
-La puerta Android ejecuta `qualityKtlintCheck`, `:androidApp:lintDebug`, las tres suites host (`:androidApp:testDebugUnitTest`, `:sharedLogic:testAndroidHostTest`, `:sharedUI:testAndroidHostTest`) y `:androidApp:assembleDebug`.
+La puerta Android ejecuta `qualityKtlintCheck`, `:androidApp:lintDebug` y `:androidApp:assembleDebug`.
 
-La puerta iOS ejecuta SwiftLint en modo estricto y sin caché, `:sharedLogic:iosSimulatorArm64Test` y una compilación `xcodebuild` para simulador arm64 sin firma. No existe todavía un target nativo de pruebas Swift; por ello la compilación es su comprobación nativa automatizada.
+La puerta iOS ejecuta SwiftLint en modo estricto y sin caché, y una compilación `xcodebuild` para simulador arm64 sin firma.
+
+## Pruebas del producto
+
+Las pruebas de comportamiento y regresión se realizan exclusivamente con Maestro. Aún no hay flujos Maestro versionados, por lo que los gates no ejecutan una suite de pruebas. Las fuentes Kotlin de prueba se conservan como historial, pero no se ejecutan en los gates ni se amplían bajo esta política. Compilar, aplicar lint o ejecutar análisis estático no equivale a ejecutar pruebas Maestro. Cuando existan flujos, ejecútalos con `maestro test <flujo.yaml>` siguiendo la [guía oficial de Maestro](https://github.com/mobile-dev-inc/maestro-docs/blob/main/maestro-cli/run-your-first-test-with-the-maestro-cli.md).
 
 ## Política
 
@@ -30,7 +34,7 @@ La puerta iOS ejecuta SwiftLint en modo estricto y sin caché, `:sharedLogic:ios
 - **Compose:** se permite el nombre PascalCase únicamente en funciones anotadas `@Composable`, mediante la excepción explícita de ktlint.
 - **Swift:** SwiftLint 0.65.1 se descarga automáticamente en `build/tools/swiftlint/0.65.1` y se verifica con SHA-256 antes de usarlo. La configuración usa las reglas normales por defecto y cubre `iosApp/iosApp` y los scripts Swift; `--strict --no-cache` convierte advertencias en fallos. Para aplicar correcciones de SwiftLint de forma intencional, usa `SWIFTLINT_FIX=1 scripts/swiftlint.sh`; las puertas nunca activan ese modo.
 - **Android Lint:** debe terminar sin errores. Sus advertencias se muestran y se gestionan separadamente de los linters de estilo para no ocultar deuda existente con una baseline.
-- **Pruebas y builds:** todas las suites indicadas y ambas compilaciones deben terminar correctamente. Las comprobaciones visuales/manuales de UI continúan siendo smoke tests, no se inventó un umbral de cobertura.
+- **Builds:** ambas compilaciones deben terminar correctamente. Los checks de estilo y análisis estático deben terminar sin errores. La evidencia de pruebas se obtiene únicamente de flujos Maestro cuando estén versionados; no se inventó un umbral de cobertura.
 
 ## CI y protección de ramas
 
@@ -45,13 +49,15 @@ El repositorio privado es [`argote-dev/tickly`](https://github.com/argote-dev/ti
 - La primera ejecución descarga dependencias Gradle y SwiftLint; las siguientes reutilizan las herramientas locales. No se instala SwiftLint globalmente.
 - Para corregir Kotlin intencionalmente: `./gradlew ktlintFormat`. Después ejecuta otra vez el gate; el formateador no resuelve todas las infracciones de nombres.
 - Los scripts pueden invocarse por ruta absoluta desde otro directorio. Los ejemplos anteriores asumen que estás en la raíz.
-- Reportes Gradle: `<módulo>/build/reports/`; resultados de pruebas: `<módulo>/build/test-results/`; log Xcode: `build/reports/xcodebuild-ios.log`. CI los conserva aunque falle un gate.
+- Reportes Gradle: `<módulo>/build/reports/`; log Xcode: `build/reports/xcodebuild-ios.log`. CI conserva los artefactos disponibles aunque falle un gate.
 
 Los gates son independientes del modo de receipts de agentes, que continúa **disabled/unmanaged**.
 
 Referencias de configuración: [ktlint Gradle](https://github.com/JLLeitschuh/ktlint-gradle), [SwiftLint](https://github.com/realm/SwiftLint), [estilos de ktlint 1.8.0](https://github.com/pinterest/ktlint/blob/1.8.0/ktlint-rule-engine-core/src/main/kotlin/com/pinterest/ktlint/rule/engine/core/api/editorconfig/CodeStyleEditorConfigProperty.kt).
 
-## Validación de la configuración (13 septiembre 2026)
+## Validación histórica de la configuración (13 septiembre 2026)
+
+La siguiente evidencia corresponde a la política anterior, que ejecutaba pruebas Kotlin y KMP en los gates. No describe la política actual de pruebas, exclusivamente basada en Maestro.
 
 - `./scripts/quality-gates.sh all`: correcto; ktlint sin infracciones, SwiftLint sin infracciones en 20 archivos y ambas compilaciones correctas.
 - Pruebas: Android app **10**, sharedLogic host **11**, sharedUI host **7**, sharedLogic iOS **11**; **39 ejecuciones, cero fallos/errores/omitidas**.
