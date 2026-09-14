@@ -53,19 +53,17 @@ Ejecuta los comandos desde la raíz del repositorio:
 ```bash
 # Generar el APK de depuración Android
 ./gradlew :androidApp:assembleDebug
-
-# Ejecutar pruebas host de los módulos compartidos
-./gradlew :sharedUI:testAndroidHostTest :sharedLogic:testAndroidHostTest
-
-# Ejecutar pruebas de lógica compartida en simulador iOS ARM64
-./gradlew :sharedLogic:iosSimulatorArm64Test
 ```
 
 Para compilar y ejecutar iOS, abre [`iosApp/`](iosApp) en Xcode y usa su esquema de ejecución.
 
+## Pruebas
+
+Las pruebas de comportamiento y regresión se realizan exclusivamente con Maestro. Aún no hay flujos Maestro versionados, por lo que no hay una suite de pruebas ejecutable hasta que se añadan. Las fuentes Kotlin de prueba se conservan como evidencia histórica; las compilaciones, lint y análisis estáticos no son evidencia de pruebas.
+
 ## Calidad
 
-Las puertas locales y de CI están documentadas en [quality gates](docs/quality-gates.md). Para ejecutar toda la validación:
+Las puertas locales y de CI de estilo, análisis estático y compilación están documentadas en [quality gates](docs/quality-gates.md). No ejecutan pruebas; las pruebas del producto se gestionan con Maestro. Para ejecutar los gates:
 
 ```bash
 scripts/quality-gates.sh

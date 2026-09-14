@@ -2,6 +2,8 @@
 
 Esta evidencia documenta la validación realizada durante la implementación de Tickly. El modo de receipts está desactivado de forma predeterminada (`disabled/unmanaged`), por lo que no se ejecutaron revisiones de receipts.
 
+> **Histórico:** la evidencia de este documento registra una política anterior basada en pruebas Gradle/Kotlin y verificaciones manuales. La política actual reserva las pruebas de comportamiento y regresión exclusivamente para Maestro. Aún no hay flujos Maestro versionados; por tanto, ninguna compilación, lint o prueba Kotlin de este documento acredita pruebas bajo la política actual.
+
 ## Cierre de tareas
 
 - [x] Implementar el temporizador KMP y la persistencia local offline.
@@ -97,21 +99,13 @@ swift scripts/verify-theme-colors.swift captura-android.png android
 swift scripts/verify-theme-colors.swift captura-ios.png ios
 ```
 
-El script compara regiones normalizadas del CTA y un control secundario. Está acotado al layout vertical predeterminado de Android Medium Phone e iPhone 17 Pro, sin banner de permisos; no es una prueba visual universal ni sustituye validaciones de accesibilidad. Los seis acentos Android tienen pruebas de contraste; la comprobación visual cubre dos acentos por plataforma.
+El script heredado compara regiones normalizadas del CTA y un control secundario. Está acotado al layout vertical predeterminado de Android Medium Phone e iPhone 17 Pro, sin banner de permisos; no es una prueba visual universal ni forma parte de la ruta de pruebas actual basada en Maestro.
 
-## Regresión de área táctil iOS — 12 de septiembre de 2026
+## Regresión histórica de área táctil iOS — 12 de septiembre de 2026
 
 - Se reprodujo dos veces en la pantalla principal pausada en español: el toque lateral izquierdo del CTA (`x=90, y=600`) no iniciaba el temporizador, mientras que pulsar el texto central sí lo hacía. El área visual de la cápsula era más amplia que su objetivo interactivo.
 - Se corrigió el objetivo de interacción de la etiqueta expandida con `contentShape(.interaction, Capsule())`. Tras la corrección, el mismo punto lateral inició y pausó el temporizador en el simulador; el build de Xcode finalizó con `BUILD SUCCEEDED` (`/tmp/tickly-hit-build.log`).
 - La investigación de documentación se delegó de forma acotada y con modelo heredado: la documentación oficial de SwiftUI confirma que `ContentShapeKinds.interaction` define el área de *hit testing* y accesibilidad. No se ejecutaron revisiones de receipts (`disabled/unmanaged`).
-
-Comprobación manual reproducible:
-
-```bash
-python3 scripts/verify-ios-button-hit.py
-```
-
-El script requiere macOS, Orca CLI y el simulador iPhone 17 Pro/iOS 26.5 con Tickly abierto en la pantalla principal vertical de 413×885, en español y pausada. Pulsa el punto fijo lateral `90,600` para iniciar y vuelve a pulsar exactamente el mismo punto para pausar; comprueba que aparece **«Iniciar»**. Si la segunda pulsación no pausa, usa el botón de accesibilidad **«Pausar»** exclusivamente para restaurar el estado y devuelve error. La prueba modifica el contador por unos segundos, pero no reinicia el temporizador ni cambia ajustes. Su alcance es un simulador y un layout concretos; no sustituye pruebas en dispositivos físicos ni una matriz de tamaños/accesibilidad.
 
 ## Reorganización por slices — 12 de septiembre de 2026
 
