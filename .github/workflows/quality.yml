@@ -20,8 +20,8 @@ jobs:
           java-version: '17'
           cache: gradle
       - uses: android-actions/setup-android@v3
-      - name: Install Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install Android SDK 37.0
+        run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Run Android quality gates
         run: scripts/quality-gates.sh android
       - name: Upload Android reports
@@ -54,8 +54,8 @@ jobs:
           java-version: '17'
           cache: gradle
       - uses: android-actions/setup-android@v3
-      - name: Install Android SDK 36 for Gradle configuration
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install Android SDK 37.0 for Gradle configuration
+        run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Run iOS quality gates
         run: scripts/quality-gates.sh ios
       - name: Upload iOS reports
